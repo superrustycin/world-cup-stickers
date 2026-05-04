@@ -3,77 +3,279 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#166534" />
+  <meta name="theme-color" content="#071c35" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Stickers 2026" />
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icon-192.svg" />
-  <title>⚽ World Cup 2026 Stickers</title>
+  <title>⚽ FIFA World Cup 2026 Stickers</title>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            pitch: { 50:'#f0fdf4', 100:'#dcfce7', 500:'#22c55e', 600:'#16a34a', 700:'#15803d', 800:'#166534', 900:'#14532d' },
-          }
-        }
-      }
-    }
-  </script>
   <style>
-    body { background: #0f172a; }
+    :root {
+      --navy:  #071c35;
+      --blue:  #003DA5;
+      --red:   #C8102E;
+      --gold:  #C9A84C;
+      --goldf: #FFD700;
+    }
+
+    * { box-sizing: border-box; }
+    body { background: var(--navy); margin: 0; }
+
+    /* Animated gold shimmer */
+    @keyframes shimmer {
+      0%   { background-position: -300% center; }
+      100% { background-position:  300% center; }
+    }
+    .gold-text {
+      background: linear-gradient(90deg, #a37c28, #FFD700, #ffe066, #FFD700, #a37c28);
+      background-size: 300% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 4s linear infinite;
+    }
+
+    /* Slow float */
+    @keyframes float {
+      0%,100% { transform: translateY(0px) rotate(0deg); }
+      50%      { transform: translateY(-12px) rotate(8deg); }
+    }
+    @keyframes float2 {
+      0%,100% { transform: translateY(0px) rotate(0deg); }
+      50%      { transform: translateY(-8px) rotate(-5deg); }
+    }
+    .ball-float  { animation: float  6s ease-in-out infinite; }
+    .ball-float2 { animation: float2 8s ease-in-out infinite; }
+    .ball-float3 { animation: float  9s 2s ease-in-out infinite; }
+
+    /* Trophy pulse */
+    @keyframes trophy-glow {
+      0%,100% { filter: drop-shadow(0 0 12px #C9A84C88); }
+      50%      { filter: drop-shadow(0 0 28px #FFD70099); }
+    }
+    .trophy-glow { animation: trophy-glow 3s ease-in-out infinite; }
+
+    /* Pitch stripe background */
+    .pitch-stripes {
+      background-image:
+        repeating-linear-gradient(
+          0deg,
+          transparent, transparent 44px,
+          rgba(255,255,255,0.018) 44px, rgba(255,255,255,0.018) 88px
+        );
+    }
+
+    /* Sticker buttons */
     .sticker-btn { transition: transform .1s, box-shadow .1s; }
-    .sticker-btn:active { transform: scale(.92); }
-    .sticker-owned  { background:#16a34a; color:#fff; }
-    .sticker-dup    { background:#ca8a04; color:#fff; }
-    .sticker-missing{ background:#1e293b; color:#94a3b8; border:1px solid #334155; }
-    ::-webkit-scrollbar { width:6px; }
-    ::-webkit-scrollbar-track { background:#0f172a; }
-    ::-webkit-scrollbar-thumb { background:#334155; border-radius:3px; }
+    .sticker-btn:active { transform: scale(.88) !important; }
+    .sticker-owned   { background: #16a34a; color: #fff; box-shadow: 0 2px 8px #16a34a66; }
+    .sticker-dup     { background: #b45309; color: #fff; box-shadow: 0 2px 8px #b4530966; }
+    .sticker-missing { background: #0f2040; color: #4a6080; border: 1px solid #1a3050; }
+
+    /* Team card */
+    .team-card {
+      background: linear-gradient(135deg, #0a1e38 0%, #0d2240 100%);
+      border: 1px solid #1a3055;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .team-header-bar {
+      height: 4px;
+      background: linear-gradient(90deg, var(--gold), var(--goldf), var(--gold));
+    }
+
+    /* Hero diagonal stripe */
+    .hero-stripe {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(
+        135deg,
+        transparent 0%, transparent 30%,
+        rgba(200,16,46,0.12) 30%, rgba(200,16,46,0.12) 55%,
+        transparent 55%
+      );
+    }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--navy); }
+    ::-webkit-scrollbar-thumb { background: #1a3055; border-radius: 3px; }
+
+    /* Flag image */
+    .flag-img {
+      width: 36px; height: 27px;
+      object-fit: cover;
+      border-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.5);
+      flex-shrink: 0;
+    }
   </style>
 </head>
 <body>
 <div id="root"></div>
 
 <script type="text/babel">
-const TOTAL = 980;
+
+/* ── DATA ─────────────────────────────────────────────────────────── */
+const TOTAL     = 980;
 const TEAM_SIZE = 20;
 const STORAGE_KEY = "wc2026_stickers";
 
-// 49 teams of 20
-const TEAM_NAMES = [
-  "🌍 Album Intro & Icons","🇺🇸 USA","🇲🇽 Mexico","🇨🇦 Canada",
-  "🇦🇷 Argentina","🇧🇷 Brazil","🇺🇾 Uruguay","🇨🇱 Chile",
-  "🇨🇴 Colombia","🇪🇨 Ecuador","🇵🇦 Panama","🇧🇴 Bolivia",
-  "🇵🇾 Paraguay","🇵🇪 Peru","🇻🇪 Venezuela","🇭🇳 Honduras",
-  "🇯🇲 Jamaica","🏴󠁧󠁢󠁥󠁮󠁧󠁿 England","🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scotland","🏴󠁧󠁢󠁷󠁬󠁳󠁿 Wales",
-  "🇫🇷 France","🇩🇪 Germany","🇪🇸 Spain","🇵🇹 Portugal",
-  "🇮🇹 Italy","🇳🇱 Netherlands","🇧🇪 Belgium","🇨🇭 Switzerland",
-  "🇦🇹 Austria","🇩🇰 Denmark","🇸🇪 Sweden","🇳🇴 Norway",
-  "🇵🇱 Poland","🇨🇿 Czechia","🇭🇷 Croatia","🇷🇸 Serbia",
-  "🇬🇷 Greece","🇹🇷 Turkey","🇺🇦 Ukraine","🇸🇰 Slovakia",
-  "🇯🇵 Japan","🇰🇷 South Korea","🇸🇦 Saudi Arabia","🇮🇷 Iran",
-  "🇦🇺 Australia","🇲🇦 Morocco","🇳🇬 Nigeria","🇸🇳 Senegal",
-  "🇪🇬 Egypt"
+const TEAMS = [
+  { name:"Album Intro & Icons", code:null,     accent:"#C9A84C" },
+  { name:"USA",                 code:"us",      accent:"#B22234" },
+  { name:"Mexico",              code:"mx",      accent:"#006847" },
+  { name:"Canada",              code:"ca",      accent:"#FF0000" },
+  { name:"Argentina",           code:"ar",      accent:"#74ACDF" },
+  { name:"Brazil",              code:"br",      accent:"#009739" },
+  { name:"Uruguay",             code:"uy",      accent:"#5EB6E4" },
+  { name:"Chile",               code:"cl",      accent:"#D52B1E" },
+  { name:"Colombia",            code:"co",      accent:"#FCD116" },
+  { name:"Ecuador",             code:"ec",      accent:"#FFD100" },
+  { name:"Panama",              code:"pa",      accent:"#004F9F" },
+  { name:"Bolivia",             code:"bo",      accent:"#D52B1E" },
+  { name:"Paraguay",            code:"py",      accent:"#D52B1E" },
+  { name:"Peru",                code:"pe",      accent:"#D91023" },
+  { name:"Venezuela",           code:"ve",      accent:"#CF142B" },
+  { name:"Honduras",            code:"hn",      accent:"#0073CF" },
+  { name:"Jamaica",             code:"jm",      accent:"#FED100" },
+  { name:"England",             code:"gb-eng",  accent:"#CF142B" },
+  { name:"Scotland",            code:"gb-sct",  accent:"#003F87" },
+  { name:"Wales",               code:"gb-wls",  accent:"#C8102E" },
+  { name:"France",              code:"fr",      accent:"#002395" },
+  { name:"Germany",             code:"de",      accent:"#DDDDDD" },
+  { name:"Spain",               code:"es",      accent:"#AA151B" },
+  { name:"Portugal",            code:"pt",      accent:"#006600" },
+  { name:"Italy",               code:"it",      accent:"#009246" },
+  { name:"Netherlands",         code:"nl",      accent:"#AE1C28" },
+  { name:"Belgium",             code:"be",      accent:"#EF3340" },
+  { name:"Switzerland",         code:"ch",      accent:"#FF0000" },
+  { name:"Austria",             code:"at",      accent:"#ED2939" },
+  { name:"Denmark",             code:"dk",      accent:"#C60C30" },
+  { name:"Sweden",              code:"se",      accent:"#006AA7" },
+  { name:"Norway",              code:"no",      accent:"#EF2B2D" },
+  { name:"Poland",              code:"pl",      accent:"#DC143C" },
+  { name:"Czechia",             code:"cz",      accent:"#D7141A" },
+  { name:"Croatia",             code:"hr",      accent:"#FF0000" },
+  { name:"Serbia",              code:"rs",      accent:"#C6363C" },
+  { name:"Greece",              code:"gr",      accent:"#0D5EAF" },
+  { name:"Turkey",              code:"tr",      accent:"#E30A17" },
+  { name:"Ukraine",             code:"ua",      accent:"#005BBB" },
+  { name:"Slovakia",            code:"sk",      accent:"#0B4EA2" },
+  { name:"Japan",               code:"jp",      accent:"#BC002D" },
+  { name:"South Korea",         code:"kr",      accent:"#CD2E3A" },
+  { name:"Saudi Arabia",        code:"sa",      accent:"#006C35" },
+  { name:"Iran",                code:"ir",      accent:"#239F40" },
+  { name:"Australia",           code:"au",      accent:"#00008B" },
+  { name:"Morocco",             code:"ma",      accent:"#C1272D" },
+  { name:"Nigeria",             code:"ng",      accent:"#008751" },
+  { name:"Senegal",             code:"sn",      accent:"#00853F" },
+  { name:"Egypt",               code:"eg",      accent:"#CE1126" },
 ];
 
+function flagUrl(code) {
+  if (!code) return null;
+  return `https://flagcdn.com/w80/${code}.png`;
+}
+
+/* ── TROPHY SVG ───────────────────────────────────────────────────── */
+function TrophySVG() {
+  return (
+    <svg className="trophy-glow" viewBox="0 0 160 220" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width:110,height:"auto"}}>
+      {/* Stars */}
+      <text x="80" y="16" textAnchor="middle" fontSize="14" fill="#FFD700" fontFamily="serif">★ ★ ★ ★ ★</text>
+      {/* Globe */}
+      <circle cx="80" cy="44" r="24" fill="#0d4a7a"/>
+      <ellipse cx="80" cy="44" rx="24" ry="11" fill="none" stroke="#4db8d4" strokeWidth="1.2" opacity="0.7"/>
+      <line x1="80" y1="20" x2="80" y2="68" stroke="#4db8d4" strokeWidth="1.2" opacity="0.7"/>
+      <line x1="56" y1="44" x2="104" y2="44" stroke="#4db8d4" strokeWidth="1.2" opacity="0.7"/>
+      {/* Continents blob */}
+      <ellipse cx="72" cy="36" rx="8" ry="5" fill="#1e7e44" opacity="0.85"/>
+      <ellipse cx="90" cy="48" rx="6" ry="4" fill="#1e7e44" opacity="0.85"/>
+      <ellipse cx="78" cy="52" rx="4" ry="3" fill="#1e7e44" opacity="0.7"/>
+      {/* Globe shine */}
+      <ellipse cx="70" cy="35" rx="7" ry="5" fill="white" opacity="0.1"/>
+      {/* Cup body */}
+      <path d="M 46 68 Q 42 110 46 148 L 114 148 Q 118 110 114 68 Z" fill="url(#cupGrad)"/>
+      {/* Cup highlight */}
+      <path d="M 58 72 Q 55 108 58 142 L 72 142 Q 69 108 66 72 Z" fill="white" opacity="0.15"/>
+      {/* Left handle */}
+      <path d="M 48 78 Q 12 92 16 128 Q 18 150 48 152" fill="none" stroke="url(#handleGrad)" strokeWidth="10" strokeLinecap="round"/>
+      {/* Right handle */}
+      <path d="M 112 78 Q 148 92 144 128 Q 142 150 112 152" fill="none" stroke="url(#handleGrad)" strokeWidth="10" strokeLinecap="round"/>
+      {/* Stem */}
+      <rect x="68" y="148" width="24" height="38" rx="2" fill="url(#stemGrad)"/>
+      {/* Base layers */}
+      <rect x="54" y="184" width="52" height="12" rx="3" fill="url(#baseGrad)"/>
+      <rect x="44" y="194" width="72" height="14" rx="4" fill="url(#base2Grad)"/>
+      {/* Base glow */}
+      <ellipse cx="80" cy="210" rx="44" ry="5" fill="#C9A84C" opacity="0.2"/>
+      {/* Gradients */}
+      <defs>
+        <linearGradient id="cupGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%"   stopColor="#a37c28"/>
+          <stop offset="40%"  stopColor="#FFD700"/>
+          <stop offset="70%"  stopColor="#C9A84C"/>
+          <stop offset="100%" stopColor="#8a6010"/>
+        </linearGradient>
+        <linearGradient id="handleGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%"   stopColor="#a37c28"/>
+          <stop offset="50%"  stopColor="#FFD700"/>
+          <stop offset="100%" stopColor="#a37c28"/>
+        </linearGradient>
+        <linearGradient id="stemGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%"   stopColor="#8a6010"/>
+          <stop offset="50%"  stopColor="#FFD700"/>
+          <stop offset="100%" stopColor="#8a6010"/>
+        </linearGradient>
+        <linearGradient id="baseGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stopColor="#FFD700"/>
+          <stop offset="100%" stopColor="#a37c28"/>
+        </linearGradient>
+        <linearGradient id="base2Grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stopColor="#C9A84C"/>
+          <stop offset="100%" stopColor="#7a5510"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+/* ── SOCCER BALL SVG ──────────────────────────────────────────────── */
+function SoccerBall({size=48, opacity=0.18}) {
+  return (
+    <svg viewBox="0 0 100 100" style={{width:size,height:size,opacity}} xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="48" fill="white" stroke="#ccc" strokeWidth="1"/>
+      <polygon points="50,10 62,32 88,32 68,50 76,76 50,60 24,76 32,50 12,32 38,32" fill="none"/>
+      {/* Pentagon center */}
+      <polygon points="50,28 62,38 58,52 42,52 38,38" fill="black"/>
+      {/* Side pentagons */}
+      <polygon points="50,10 62,14 68,26 56,32 44,32 32,26 38,14" fill="none" stroke="black" strokeWidth="2.5"/>
+      <polygon points="78,38 90,44 88,58 76,64 66,56 68,42" fill="black"/>
+      <polygon points="22,38 10,44 12,58 24,64 34,56 32,42" fill="black"/>
+      <polygon points="62,72 72,68 80,76 74,88 60,88 54,78" fill="black"/>
+      <polygon points="38,72 28,68 20,76 26,88 40,88 46,78" fill="black"/>
+    </svg>
+  );
+}
+
+/* ── STORAGE ──────────────────────────────────────────────────────── */
 function getInitialState() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) return JSON.parse(saved);
   } catch {}
-  return new Array(TOTAL).fill(0); // 0=missing 1=owned 2=dup
+  return new Array(TOTAL).fill(0);
 }
 
+/* ── APP ──────────────────────────────────────────────────────────── */
 function App() {
   const [stickers, setStickers] = React.useState(getInitialState);
-  const [search, setSearch] = React.useState("");
-  const [activeTeam, setActiveTeam] = React.useState(null);
+  const [search, setSearch]     = React.useState("");
   const teamRefs = React.useRef({});
 
   React.useEffect(() => {
@@ -88,128 +290,234 @@ function App() {
     });
   };
 
-  const owned = stickers.filter(s => s === 1).length;
-  const dup   = stickers.filter(s => s === 2).length;
+  const owned   = stickers.filter(s => s === 1).length;
+  const dup     = stickers.filter(s => s === 2).length;
   const missing = TOTAL - owned - dup;
+  const pct     = ((owned + dup) / TOTAL * 100).toFixed(1);
 
   const handleSearch = (e) => {
     const val = e.target.value;
     setSearch(val);
     const num = parseInt(val, 10);
     if (num >= 1 && num <= TOTAL) {
-      const teamIdx = Math.floor((num - 1) / TEAM_SIZE);
-      const el = teamRefs.current[teamIdx];
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      const ti = Math.floor((num - 1) / TEAM_SIZE);
+      teamRefs.current[ti]?.scrollIntoView({ behavior:"smooth", block:"start" });
     }
   };
 
   const highlightNum = search ? parseInt(search, 10) : null;
-
   const numTeams = Math.ceil(TOTAL / TEAM_SIZE);
 
   return (
-    <div className="min-h-screen text-white" style={{background:"#0f172a"}}>
+    <div className="min-h-screen" style={{background:"#071c35"}}>
 
-      {/* HEADER */}
-      <div className="sticky top-0 z-20 px-3 pt-4 pb-3" style={{background:"linear-gradient(180deg,#14532d 0%,#0f172a 100%)"}}>
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-3xl">⚽</span>
-          <div>
-            <h1 className="text-xl font-black tracking-tight leading-tight">World Cup 2026</h1>
-            <p className="text-xs text-green-400 font-semibold">Panini Album Tracker</p>
+      {/* ── HERO BANNER ─────────────────────────────────────────────── */}
+      <div className="relative overflow-hidden pitch-stripes"
+        style={{background:"linear-gradient(160deg,#071c35 0%,#0a2444 35%,#120820 65%,#1a0508 100%)", paddingBottom:32}}>
+
+        {/* Diagonal red stripe */}
+        <div className="hero-stripe"/>
+
+        {/* Decorative balls */}
+        <div className="absolute" style={{top:18,right:16,pointerEvents:"none"}}>
+          <div className="ball-float"><SoccerBall size={64} opacity={0.13}/></div>
+        </div>
+        <div className="absolute" style={{bottom:24,left:12,pointerEvents:"none"}}>
+          <div className="ball-float2"><SoccerBall size={44} opacity={0.1}/></div>
+        </div>
+        <div className="absolute" style={{top:80,left:"42%",pointerEvents:"none"}}>
+          <div className="ball-float3"><SoccerBall size={28} opacity={0.07}/></div>
+        </div>
+
+        {/* Gold top line */}
+        <div style={{height:4, background:"linear-gradient(90deg,#C8102E,#C9A84C,#FFD700,#C9A84C,#C8102E)"}}/>
+
+        <div className="flex flex-col items-center px-4 pt-8 pb-2">
+
+          {/* Official label */}
+          <div className="flex items-center gap-2 mb-3">
+            <div style={{height:1,width:40,background:"linear-gradient(90deg,transparent,#C9A84C)"}}/>
+            <span className="text-xs font-bold tracking-widest uppercase" style={{color:"#C9A84C"}}>FIFA World Cup™</span>
+            <div style={{height:1,width:40,background:"linear-gradient(90deg,#C9A84C,transparent)"}}/>
+          </div>
+
+          {/* Year */}
+          <h1 className="gold-text font-black leading-none mb-1" style={{fontSize:"clamp(64px,18vw,96px)",letterSpacing:"-2px"}}>
+            2026
+          </h1>
+
+          {/* Trophy */}
+          <div className="my-2">
+            <TrophySVG/>
+          </div>
+
+          {/* Subtitle */}
+          <p className="text-white font-black text-base tracking-widest uppercase mb-1" style={{letterSpacing:"0.2em"}}>
+            Panini Sticker Album
+          </p>
+          <p className="text-sm mb-5" style={{color:"#C9A84C"}}>
+            David's Tracker · 980 Stickers · 49 Teams
+          </p>
+
+          {/* Host nations */}
+          <div className="flex gap-6 items-center justify-center mb-4">
+            {[{code:"us",name:"USA"},{code:"ca",name:"Canada"},{code:"mx",name:"Mexico"}].map(h => (
+              <div key={h.code} className="flex flex-col items-center gap-1">
+                <img
+                  src={flagUrl(h.code)}
+                  alt={h.name}
+                  className="flag-img"
+                  style={{width:52,height:36,borderRadius:6,boxShadow:"0 2px 10px rgba(0,0,0,.6)"}}
+                  onError={e=>{ e.target.style.display="none"; }}
+                />
+                <span className="text-xs font-bold text-gray-300">{h.name}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Host label */}
+          <div className="flex items-center gap-2">
+            <div style={{height:1,width:28,background:"linear-gradient(90deg,transparent,#4a6080)"}}/>
+            <span className="text-xs text-gray-500">Co-hosted by USA · Canada · Mexico</span>
+            <div style={{height:1,width:28,background:"linear-gradient(90deg,#4a6080,transparent)"}}/>
           </div>
         </div>
 
-        {/* STATS */}
+        {/* Gold bottom line */}
+        <div style={{height:4,background:"linear-gradient(90deg,#C8102E,#C9A84C,#FFD700,#C9A84C,#C8102E)",marginTop:16}}/>
+      </div>
+
+      {/* ── STICKY CONTROLS ─────────────────────────────────────────── */}
+      <div className="sticky top-0 z-20 px-3 pt-3 pb-3"
+        style={{background:"rgba(7,28,53,0.97)",backdropFilter:"blur(12px)",borderBottom:"1px solid #1a3055"}}>
+
+        {/* Stats */}
         <div className="grid grid-cols-3 gap-2 mb-3">
-          <div className="rounded-xl p-2 text-center" style={{background:"#166534"}}>
-            <div className="text-2xl font-black text-green-300">{owned}</div>
-            <div className="text-xs font-bold text-green-200">✅ Collected</div>
+          <div className="rounded-xl p-2 text-center relative overflow-hidden"
+            style={{background:"linear-gradient(135deg,#0d3a1a,#164d25)",border:"1px solid #1a5c2a"}}>
+            <div className="text-2xl font-black" style={{color:"#4ade80"}}>{owned}</div>
+            <div className="text-xs font-bold" style={{color:"#86efac"}}>✅ Collected</div>
           </div>
-          <div className="rounded-xl p-2 text-center" style={{background:"#7f1d1d"}}>
-            <div className="text-2xl font-black text-red-300">{missing}</div>
-            <div className="text-xs font-bold text-red-200">❌ Missing</div>
+          <div className="rounded-xl p-2 text-center relative overflow-hidden"
+            style={{background:"linear-gradient(135deg,#3a0d10,#5a1015)",border:"1px solid #7f1d1d"}}>
+            <div className="text-2xl font-black" style={{color:"#fca5a5"}}>{missing}</div>
+            <div className="text-xs font-bold" style={{color:"#fca5a5"}}>❌ Missing</div>
           </div>
-          <div className="rounded-xl p-2 text-center" style={{background:"#713f12"}}>
-            <div className="text-2xl font-black text-yellow-300">{dup}</div>
-            <div className="text-xs font-bold text-yellow-200">🔄 Duplicates</div>
+          <div className="rounded-xl p-2 text-center relative overflow-hidden"
+            style={{background:"linear-gradient(135deg,#3a2200,#4d2e00)",border:"1px solid #713f12"}}>
+            <div className="text-2xl font-black" style={{color:"#fcd34d"}}>{dup}</div>
+            <div className="text-xs font-bold" style={{color:"#fde68a"}}>🔄 Duplicates</div>
           </div>
         </div>
 
-        {/* PROGRESS BAR */}
-        <div className="w-full bg-gray-800 rounded-full h-3 mb-3">
-          <div
-            className="bg-green-500 h-3 rounded-full transition-all duration-500"
-            style={{width: `${((owned+dup)/TOTAL*100).toFixed(1)}%`}}
-          />
+        {/* Progress bar */}
+        <div className="relative w-full rounded-full mb-1 overflow-hidden" style={{height:10,background:"#0d2040"}}>
+          <div className="h-full rounded-full transition-all duration-700"
+            style={{
+              width:`${pct}%`,
+              background:"linear-gradient(90deg,#C8102E,#C9A84C,#FFD700)"
+            }}/>
         </div>
-        <p className="text-center text-xs text-gray-400 mb-2">
-          {((owned+dup)/TOTAL*100).toFixed(1)}% of album filled
+        <p className="text-center text-xs mb-2" style={{color:"#C9A84C"}}>
+          {pct}% complete — {owned+dup} / {TOTAL} stickers
         </p>
 
-        {/* SEARCH */}
+        {/* Search */}
         <input
-          type="number"
-          min="1"
-          max={TOTAL}
-          placeholder="🔍 Jump to sticker number..."
+          type="number" min="1" max={TOTAL}
+          placeholder="🔍  Jump to sticker number (1–980)…"
           value={search}
           onChange={handleSearch}
-          className="w-full rounded-xl px-4 py-3 text-base font-semibold text-white placeholder-gray-500 outline-none border-2 border-gray-700 focus:border-green-500"
-          style={{background:"#1e293b"}}
+          className="w-full rounded-xl px-4 py-3 text-base font-semibold text-white placeholder-gray-600 outline-none"
+          style={{background:"#0a1e38",border:"2px solid #1a3055",transition:"border-color .2s"}}
+          onFocus={e=>e.target.style.borderColor="#C9A84C"}
+          onBlur={e=>e.target.style.borderColor="#1a3055"}
         />
       </div>
 
-      {/* LEGEND */}
-      <div className="flex gap-3 justify-center text-xs px-3 py-2 text-gray-400">
-        <span className="flex items-center gap-1"><span className="w-4 h-4 rounded inline-block" style={{background:"#1e293b",border:"1px solid #334155"}}></span>Missing</span>
-        <span className="flex items-center gap-1"><span className="w-4 h-4 rounded inline-block bg-green-600"></span>Owned</span>
-        <span className="flex items-center gap-1"><span className="w-4 h-4 rounded inline-block bg-yellow-600"></span>Duplicate</span>
+      {/* ── LEGEND ──────────────────────────────────────────────────── */}
+      <div className="flex gap-4 justify-center text-xs px-3 py-2" style={{color:"#4a6080"}}>
+        <span className="flex items-center gap-1">
+          <span className="w-4 h-4 rounded inline-block" style={{background:"#0f2040",border:"1px solid #1a3050"}}/>
+          Missing
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-4 h-4 rounded inline-block bg-green-600"/>
+          Owned (1×)
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-4 h-4 rounded inline-block" style={{background:"#b45309"}}/>
+          Duplicate (2×)
+        </span>
       </div>
 
-      {/* TEAMS */}
-      <div className="px-3 pb-8">
+      {/* ── TEAMS ───────────────────────────────────────────────────── */}
+      <div className="px-3 pb-10 pt-1">
         {Array.from({length: numTeams}, (_, ti) => {
           const start = ti * TEAM_SIZE;
-          const end = Math.min(start + TEAM_SIZE, TOTAL);
-          const label = TEAM_NAMES[ti] || `Team ${ti + 1}`;
-          const teamStickers = stickers.slice(start, end);
-          const tOwned = teamStickers.filter(s=>s===1).length;
-          const tDup   = teamStickers.filter(s=>s===2).length;
-          const tTotal = end - start;
+          const end   = Math.min(start + TEAM_SIZE, TOTAL);
+          const team  = TEAMS[ti] || { name:`Team ${ti+1}`, code:null, accent:"#C9A84C" };
+          const slice = stickers.slice(start, end);
+          const tOwned  = slice.filter(s=>s===1).length;
+          const tDup    = slice.filter(s=>s===2).length;
+          const tTotal  = end - start;
           const complete = tOwned + tDup === tTotal;
+          const fUrl = flagUrl(team.code);
 
           return (
-            <div key={ti} ref={el => teamRefs.current[ti] = el} className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-sm font-black text-white">{label}</h2>
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${complete ? "bg-green-700 text-green-200" : "bg-gray-800 text-gray-400"}`}>
-                  {tOwned+tDup}/{tTotal} {complete ? "✅" : ""}
+            <div key={ti} ref={el=>teamRefs.current[ti]=el} className="team-card mb-4">
+              {/* Colored top accent bar */}
+              <div style={{height:3,background:`linear-gradient(90deg,${team.accent},${team.accent}88,transparent)`}}/>
+
+              {/* Team header */}
+              <div className="flex items-center justify-between px-3 py-2">
+                <div className="flex items-center gap-2">
+                  {fUrl
+                    ? <img src={fUrl} alt={team.name} className="flag-img"
+                        onError={e=>{ e.target.style.display="none"; }}/>
+                    : <span className="text-2xl">🌍</span>
+                  }
+                  <span className="font-black text-white text-sm">{team.name}</span>
+                </div>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                  complete
+                    ? "text-green-200"
+                    : "text-gray-400"
+                }`} style={{background: complete ? "#14532d" : "#0d2040",border:`1px solid ${complete?"#166534":"#1a3055"}`}}>
+                  {tOwned+tDup}/{tTotal}{complete ? " ✅" : ""}
                 </span>
               </div>
-              <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-8 md:grid-cols-10">
+
+              {/* Sticker grid */}
+              <div className="grid grid-cols-5 gap-1.5 px-3 pb-3 sm:grid-cols-8 md:grid-cols-10">
                 {Array.from({length: end-start}, (_, i) => {
-                  const idx = start + i;
-                  const num = idx + 1;
+                  const idx   = start + i;
+                  const num   = idx + 1;
                   const state = stickers[idx];
-                  const isHighlight = highlightNum === num;
+                  const isHl  = highlightNum === num;
                   let cls = "sticker-btn rounded-lg flex flex-col items-center justify-center font-black text-sm select-none cursor-pointer relative ";
-                  if (state === 1) cls += "sticker-owned";
+                  if      (state === 1) cls += "sticker-owned";
                   else if (state === 2) cls += "sticker-dup";
-                  else cls += "sticker-missing";
-                  if (isHighlight) cls += " ring-4 ring-white ring-offset-1 ring-offset-gray-900 scale-110 z-10";
+                  else                  cls += "sticker-missing";
 
                   return (
                     <button
                       key={idx}
                       onClick={() => cycle(idx)}
                       className={cls}
-                      style={{height:"52px", boxShadow: isHighlight ? "0 0 0 3px white" : undefined}}
+                      style={{
+                        height:"52px",
+                        transform: isHl ? "scale(1.12)" : undefined,
+                        outline: isHl ? "3px solid #FFD700" : undefined,
+                        outlineOffset: isHl ? "2px" : undefined,
+                        zIndex: isHl ? 10 : undefined,
+                      }}
                       aria-label={`Sticker ${num}`}
                     >
                       <span className="leading-none">{num}</span>
                       {state === 2 && (
-                        <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs font-black rounded-full w-5 h-5 flex items-center justify-center leading-none">×2</span>
+                        <span className="absolute -top-1.5 -right-1.5 text-white text-xs font-black rounded-full flex items-center justify-center leading-none"
+                          style={{width:20,height:20,background:"#ea580c",fontSize:10}}>×2</span>
                       )}
                     </button>
                   );
@@ -220,22 +528,28 @@ function App() {
         })}
       </div>
 
-      {/* FOOTER */}
-      <div className="text-center text-xs text-gray-600 pb-6">
-        Made with ⚽ for David · FIFA World Cup 2026
+      {/* ── FOOTER ──────────────────────────────────────────────────── */}
+      <div style={{background:"linear-gradient(0deg,#030d1a,#071c35)",borderTop:"1px solid #1a3055",padding:"24px 16px"}}>
+        <div className="flex justify-center gap-3 mb-3">
+          {["🇺🇸","🇨🇦","🇲🇽"].map(f=>(
+            <span key={f} className="text-2xl">{f}</span>
+          ))}
+        </div>
+        <p className="text-center text-xs font-bold mb-1" style={{color:"#C9A84C"}}>FIFA World Cup 2026™</p>
+        <p className="text-center text-xs" style={{color:"#2a4060"}}>Made with ⚽ for David</p>
       </div>
     </div>
   );
 }
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<App />);
+root.render(<App/>);
 </script>
 
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./sw.js").catch(() => {});
+      navigator.serviceWorker.register("./sw.js").catch(()=>{});
     });
   }
 </script>
