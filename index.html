@@ -20,30 +20,23 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- ════════════════════════════════════════════════════════
-       STEP 1 ── Paste your Firebase config here
-       Get it from: console.firebase.google.com
-         → your project → Project Settings → Your apps → SDK setup
-       ════════════════════════════════════════════════════════ -->
   <script>
     const FIREBASE_CONFIG = {
-      apiKey:            "PASTE_YOUR_apiKey_HERE",
-      authDomain:        "PASTE_YOUR_authDomain_HERE",
-      databaseURL:       "PASTE_YOUR_databaseURL_HERE",
-      projectId:         "PASTE_YOUR_projectId_HERE",
-      storageBucket:     "PASTE_YOUR_storageBucket_HERE",
-      messagingSenderId: "PASTE_YOUR_messagingSenderId_HERE",
-      appId:             "PASTE_YOUR_appId_HERE",
+      apiKey:            "AIzaSyBX2abJBRp3aHK_Fr5ArASapzpO6lxZvtw",
+      authDomain:        "wc2026-stickers-b73b2.firebaseapp.com",
+      databaseURL:       "https://wc2026-stickers-b73b2-default-rtdb.firebaseio.com",
+      projectId:         "wc2026-stickers-b73b2",
+      storageBucket:     "wc2026-stickers-b73b2.firebasestorage.app",
+      messagingSenderId: "470643210123",
+      appId:             "1:470643210123:web:e7406d3a9c6c4bbb26a18e",
     };
 
     let _db = null;
-    const CONFIG_READY = !FIREBASE_CONFIG.apiKey.startsWith("PASTE");
-    if (CONFIG_READY) {
-      try {
-        firebase.initializeApp(FIREBASE_CONFIG);
-        _db = firebase.database();
-      } catch(e) { console.error("Firebase init failed", e); }
-    }
+    const CONFIG_READY = true;
+    try {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      _db = firebase.database();
+    } catch(e) { console.error("Firebase init failed", e); }
     function dbRef(path) { return _db ? _db.ref(path) : null; }
   </script>
 
@@ -148,7 +141,7 @@ const MUSEUM_SECTION = {
 };
 
 const TEAM_DEFS = [
-  {id:"MEX",name:"Mexico",               flagCode:"mx",    accent:"#006847"},
+  id:"MEX",name:"Mexico",               flagCode:"mx",    accent:"#006847"},
   {id:"RSA",name:"South Africa",         flagCode:"za",    accent:"#007A4D"},
   {id:"KOR",name:"South Korea",          flagCode:"kr",    accent:"#CD2E3A"},
   {id:"CZE",name:"Czechia",              flagCode:"cz",    accent:"#D7141A"},
