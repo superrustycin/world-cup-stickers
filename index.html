@@ -504,21 +504,29 @@ function TrackerScreen({username, onSwitchUser}) {
   const user = USERS[username];
   const [data, setData]       = React.useState({});
   const [loading, setLoading] = React.useState(true);
+  const [fbError, setFbError] = React.useState(false);
   const [syncing, setSyncing] = React.useState(false);
   const [search, setSearch]   = React.useState("");
   const sectionRefs = React.useRef({});
   const dataRef     = React.useRef(data);
   React.useEffect(() => { dataRef.current = data; }, [data]);
 
-  // Real-time Firebase listener
+  // Real-time Firebase listener with 6-second timeout fallback
   React.useEffect(() => {
     const ref = dbRef(`stickers/${username}`);
     if (!ref) { setLoading(false); return; }
+
+    // Safety net: always show the app after 6s even if Firebase is slow
+    const timeout = setTimeout(() => setLoading(false), 6000);
+
     const handler = ref.on('value', snap => {
+      clearTimeout(timeout);
       setData(snap.val() || {});
+      setFbError(false);
       setLoading(false);
-    }, () => setLoading(false));
-    return () => ref.off('value', handler);
+    }, (err) => { clearTimeout(timeout); console.error("Firebase error:", err); setFbError(true); setLoading(false); });
+
+    return () => { clearTimeout(timeout); ref.off('value', handler); };
   }, [username]);
 
   // Cycle sticker: optimistic update + Firebase write
@@ -553,15 +561,32 @@ function TrackerScreen({username, onSwitchUser}) {
   const pct     = ((owned+dup)/TOTAL*100).toFixed(1);
 
   if (loading) return (
-    <div className="min-h-screen flex flex-col items-center justify-center" style={{background:"#071c35"}}>
+    <div className="min-h-screen flex flex-col items-center justify-center px-6" style={{background:"#071c35"}}>
       <div className="text-5xl mb-4">⚽</div>
-      <p className="font-black text-white text-lg mb-2">Loading {username}'s album…</p>
-      <div className="flex gap-1">
+      <p className="font-black text-white text-lg mb-2">Connecting to database…</p>
+      <div className="flex gap-1 mb-3">
         {[0,1,2].map(i=>(
           <div key={i} className="w-2 h-2 rounded-full bg-green-400"
             style={{animation:`pulse-dot 1.2s ${i*0.2}s ease-in-out infinite`}}/>
         ))}
       </div>
+      <p className="text-xs text-center" style={{color:"#4a6080"}}>If this takes more than a few seconds,<br/>check your internet connection.</p>
+    </div>
+  );
+
+  if (fbError) return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{background:"#071c35"}}>
+      <div className="text-5xl mb-4">🔒</div>
+      <p className="font-black text-white text-lg mb-2">Database access denied</p>
+      <p className="text-sm mb-5" style={{color:"#94a3b8",maxWidth:380}}>
+        Firebase is blocking requests. Go to the Firebase console →<br/>
+        <strong style={{color:"#C9A84C"}}>Realtime Database → Rules</strong> and set both <code style={{color:"#4ade80"}}>"read"</code> and <code style={{color:"#4ade80"}}>"write"</code> to <code style={{color:"#4ade80"}}>true</code>.
+      </p>
+      <button onClick={()=>window.location.reload()}
+        className="font-bold rounded-full px-6 py-3 text-sm text-white"
+        style={{background:"linear-gradient(135deg,#003DA5,#0056e0)"}}>
+        Try again
+      </button>
     </div>
   );
 
