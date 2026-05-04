@@ -1,0 +1,18 @@
+{
+  "name": "World Cup 2026 Stickers",
+  "short_name": "Stickers 2026",
+  "description": "Panini album tracker for FIFA World Cup 2026",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#166534",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

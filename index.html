@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#166534" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Stickers 2026" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.svg" />
+  <title>⚽ World Cup 2026 Stickers</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            pitch: { 50:'#f0fdf4', 100:'#dcfce7', 500:'#22c55e', 600:'#16a34a', 700:'#15803d', 800:'#166534', 900:'#14532d' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background: #0f172a; }
+    .sticker-btn { transition: transform .1s, box-shadow .1s; }
+    .sticker-btn:active { transform: scale(.92); }
+    .sticker-owned  { background:#16a34a; color:#fff; }
+    .sticker-dup    { background:#ca8a04; color:#fff; }
+    .sticker-missing{ background:#1e293b; color:#94a3b8; border:1px solid #334155; }
+    ::-webkit-scrollbar { width:6px; }
+    ::-webkit-scrollbar-track { background:#0f172a; }
+    ::-webkit-scrollbar-thumb { background:#334155; border-radius:3px; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const TOTAL = 980;
+const TEAM_SIZE = 20;
+const STORAGE_KEY = "wc2026_stickers";
+
+// 49 teams of 20
+const TEAM_NAMES = [
+  "🌍 Album Intro & Icons","🇺🇸 USA","🇲🇽 Mexico","🇨🇦 Canada",
+  "🇦🇷 Argentina","🇧🇷 Brazil","🇺🇾 Uruguay","🇨🇱 Chile",
+  "🇨🇴 Colombia","🇪🇨 Ecuador","🇵🇦 Panama","🇧🇴 Bolivia",
+  "🇵🇾 Paraguay","🇵🇪 Peru","🇻🇪 Venezuela","🇭🇳 Honduras",
+  "🇯🇲 Jamaica","🏴󠁧󠁢󠁥󠁮󠁧󠁿 England","🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scotland","🏴󠁧󠁢󠁷󠁬󠁳󠁿 Wales",
+  "🇫🇷 France","🇩🇪 Germany","🇪🇸 Spain","🇵🇹 Portugal",
+  "🇮🇹 Italy","🇳🇱 Netherlands","🇧🇪 Belgium","🇨🇭 Switzerland",
+  "🇦🇹 Austria","🇩🇰 Denmark","🇸🇪 Sweden","🇳🇴 Norway",
+  "🇵🇱 Poland","🇨🇿 Czechia","🇭🇷 Croatia","🇷🇸 Serbia",
+  "🇬🇷 Greece","🇹🇷 Turkey","🇺🇦 Ukraine","🇸🇰 Slovakia",
+  "🇯🇵 Japan","🇰🇷 South Korea","🇸🇦 Saudi Arabia","🇮🇷 Iran",
+  "🇦🇺 Australia","🇲🇦 Morocco","🇳🇬 Nigeria","🇸🇳 Senegal",
+  "🇪🇬 Egypt"
+];
+
+function getInitialState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch {}
+  return new Array(TOTAL).fill(0); // 0=missing 1=owned 2=dup
+}
+
+function App() {
+  const [stickers, setStickers] = React.useState(getInitialState);
+  const [search, setSearch] = React.useState("");
+  const [activeTeam, setActiveTeam] = React.useState(null);
+  const teamRefs = React.useRef({});
+
+  React.useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stickers));
+  }, [stickers]);
+
+  const cycle = (idx) => {
+    setStickers(prev => {
+      const next = [...prev];
+      next[idx] = (next[idx] + 1) % 3;
+      return next;
+    });
+  };
+
+  const owned = stickers.filter(s => s === 1).length;
+  const dup   = stickers.filter(s => s === 2).length;
+  const missing = TOTAL - owned - dup;
+
+  const handleSearch = (e) => {
+    const val = e.target.value;
+    setSearch(val);
+    const num = parseInt(val, 10);
+    if (num >= 1 && num <= TOTAL) {
+      const teamIdx = Math.floor((num - 1) / TEAM_SIZE);
+      const el = teamRefs.current[teamIdx];
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  const highlightNum = search ? parseInt(search, 10) : null;
+
+  const numTeams = Math.ceil(TOTAL / TEAM_SIZE);
+
+  return (
+    <div className="min-h-screen text-white" style={{background:"#0f172a"}}>
+
+      {/* HEADER */}
+      <div className="sticky top-0 z-20 px-3 pt-4 pb-3" style={{background:"linear-gradient(180deg,#14532d 0%,#0f172a 100%)"}}>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-3xl">⚽</span>
+          <div>
+            <h1 className="text-xl font-black tracking-tight leading-tight">World Cup 2026</h1>
+            <p className="text-xs text-green-400 font-semibold">Panini Album Tracker</p>
+          </div>
+        </div>
+
+        {/* STATS */}
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          <div className="rounded-xl p-2 text-center" style={{background:"#166534"}}>
+            <div className="text-2xl font-black text-green-300">{owned}</div>
+            <div className="text-xs font-bold text-green-200">✅ Collected</div>
+          </div>
+          <div className="rounded-xl p-2 text-center" style={{background:"#7f1d1d"}}>
+            <div className="text-2xl font-black text-red-300">{missing}</div>
+            <div className="text-xs font-bold text-red-200">❌ Missing</div>
+          </div>
+          <div className="rounded-xl p-2 text-center" style={{background:"#713f12"}}>
+            <div className="text-2xl font-black text-yellow-300">{dup}</div>
+            <div className="text-xs font-bold text-yellow-200">🔄 Duplicates</div>
+          </div>
+        </div>
+
+        {/* PROGRESS BAR */}
+        <div className="w-full bg-gray-800 rounded-full h-3 mb-3">
+          <div
+            className="bg-green-500 h-3 rounded-full transition-all duration-500"
+            style={{width: `${((owned+dup)/TOTAL*100).toFixed(1)}%`}}
+          />
+        </div>
+        <p className="text-center text-xs text-gray-400 mb-2">
+          {((owned+dup)/TOTAL*100).toFixed(1)}% of album filled
+        </p>
+
+        {/* SEARCH */}
+        <input
+          type="number"
+          min="1"
+          max={TOTAL}
+          placeholder="🔍 Jump to sticker number..."
+          value={search}
+          onChange={handleSearch}
+          className="w-full rounded-xl px-4 py-3 text-base font-semibold text-white placeholder-gray-500 outline-none border-2 border-gray-700 focus:border-green-500"
+          style={{background:"#1e293b"}}
+        />
+      </div>
+
+      {/* LEGEND */}
+      <div className="flex gap-3 justify-center text-xs px-3 py-2 text-gray-400">
+        <span className="flex items-center gap-1"><span className="w-4 h-4 rounded inline-block" style={{background:"#1e293b",border:"1px solid #334155"}}></span>Missing</span>
+        <span className="flex items-center gap-1"><span className="w-4 h-4 rounded inline-block bg-green-600"></span>Owned</span>
+        <span className="flex items-center gap-1"><span className="w-4 h-4 rounded inline-block bg-yellow-600"></span>Duplicate</span>
+      </div>
+
+      {/* TEAMS */}
+      <div className="px-3 pb-8">
+        {Array.from({length: numTeams}, (_, ti) => {
+          const start = ti * TEAM_SIZE;
+          const end = Math.min(start + TEAM_SIZE, TOTAL);
+          const label = TEAM_NAMES[ti] || `Team ${ti + 1}`;
+          const teamStickers = stickers.slice(start, end);
+          const tOwned = teamStickers.filter(s=>s===1).length;
+          const tDup   = teamStickers.filter(s=>s===2).length;
+          const tTotal = end - start;
+          const complete = tOwned + tDup === tTotal;
+
+          return (
+            <div key={ti} ref={el => teamRefs.current[ti] = el} className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-sm font-black text-white">{label}</h2>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${complete ? "bg-green-700 text-green-200" : "bg-gray-800 text-gray-400"}`}>
+                  {tOwned+tDup}/{tTotal} {complete ? "✅" : ""}
+                </span>
+              </div>
+              <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-8 md:grid-cols-10">
+                {Array.from({length: end-start}, (_, i) => {
+                  const idx = start + i;
+                  const num = idx + 1;
+                  const state = stickers[idx];
+                  const isHighlight = highlightNum === num;
+                  let cls = "sticker-btn rounded-lg flex flex-col items-center justify-center font-black text-sm select-none cursor-pointer relative ";
+                  if (state === 1) cls += "sticker-owned";
+                  else if (state === 2) cls += "sticker-dup";
+                  else cls += "sticker-missing";
+                  if (isHighlight) cls += " ring-4 ring-white ring-offset-1 ring-offset-gray-900 scale-110 z-10";
+
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => cycle(idx)}
+                      className={cls}
+                      style={{height:"52px", boxShadow: isHighlight ? "0 0 0 3px white" : undefined}}
+                      aria-label={`Sticker ${num}`}
+                    >
+                      <span className="leading-none">{num}</span>
+                      {state === 2 && (
+                        <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs font-black rounded-full w-5 h-5 flex items-center justify-center leading-none">×2</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* FOOTER */}
+      <div className="text-center text-xs text-gray-600 pb-6">
+        Made with ⚽ for David · FIFA World Cup 2026
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
