@@ -15,18 +15,9 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root {
-      --navy:  #071c35;
-      --blue:  #003DA5;
-      --red:   #C8102E;
-      --gold:  #C9A84C;
-      --goldf: #FFD700;
-    }
-
     * { box-sizing: border-box; }
-    body { background: var(--navy); margin: 0; }
+    body { background: #071c35; margin: 0; }
 
-    /* Animated gold shimmer */
     @keyframes shimmer {
       0%   { background-position: -300% center; }
       100% { background-position:  300% center; }
@@ -40,90 +31,90 @@
       animation: shimmer 4s linear infinite;
     }
 
-    /* Slow float */
-    @keyframes float {
-      0%,100% { transform: translateY(0px) rotate(0deg); }
-      50%      { transform: translateY(-12px) rotate(8deg); }
-    }
-    @keyframes float2 {
-      0%,100% { transform: translateY(0px) rotate(0deg); }
-      50%      { transform: translateY(-8px) rotate(-5deg); }
-    }
+    @keyframes float  { 0%,100%{transform:translateY(0) rotate(0deg)}  50%{transform:translateY(-12px) rotate(8deg)} }
+    @keyframes float2 { 0%,100%{transform:translateY(0) rotate(0deg)}  50%{transform:translateY(-8px)  rotate(-5deg)} }
+    @keyframes float3 { 0%,100%{transform:translateY(0) rotate(0deg)}  50%{transform:translateY(-16px) rotate(12deg)} }
     .ball-float  { animation: float  6s ease-in-out infinite; }
     .ball-float2 { animation: float2 8s ease-in-out infinite; }
-    .ball-float3 { animation: float  9s 2s ease-in-out infinite; }
+    .ball-float3 { animation: float3 9s 2s ease-in-out infinite; }
 
-    /* Trophy pulse */
     @keyframes trophy-glow {
       0%,100% { filter: drop-shadow(0 0 12px #C9A84C88); }
       50%      { filter: drop-shadow(0 0 28px #FFD70099); }
     }
     .trophy-glow { animation: trophy-glow 3s ease-in-out infinite; }
 
-    /* Pitch stripe background */
+    @keyframes card-pulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(255,215,0,0); }
+      50%      { box-shadow: 0 0 24px 4px rgba(255,215,0,0.15); }
+    }
+    .user-card:hover { transform: translateY(-4px) scale(1.02); }
+    .user-card       { transition: transform .2s, box-shadow .2s; }
+
+    @keyframes slide-in {
+      from { opacity:0; transform:translateY(24px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .slide-in { animation: slide-in .35s ease-out both; }
+
     .pitch-stripes {
-      background-image:
-        repeating-linear-gradient(
-          0deg,
-          transparent, transparent 44px,
-          rgba(255,255,255,0.018) 44px, rgba(255,255,255,0.018) 88px
-        );
-    }
-
-    /* Sticker buttons */
-    .sticker-btn { transition: transform .1s, box-shadow .1s; }
-    .sticker-btn:active { transform: scale(.88) !important; }
-    .sticker-owned   { background: #16a34a; color: #fff; box-shadow: 0 2px 8px #16a34a66; }
-    .sticker-dup     { background: #b45309; color: #fff; box-shadow: 0 2px 8px #b4530966; }
-    .sticker-missing { background: #0f2040; color: #4a6080; border: 1px solid #1a3050; }
-
-    /* Team card */
-    .team-card {
-      background: linear-gradient(135deg, #0a1e38 0%, #0d2240 100%);
-      border: 1px solid #1a3055;
-      border-radius: 16px;
-      overflow: hidden;
-    }
-    .team-header-bar {
-      height: 4px;
-      background: linear-gradient(90deg, var(--gold), var(--goldf), var(--gold));
-    }
-
-    /* Hero diagonal stripe */
-    .hero-stripe {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(
-        135deg,
-        transparent 0%, transparent 30%,
-        rgba(200,16,46,0.12) 30%, rgba(200,16,46,0.12) 55%,
-        transparent 55%
+      background-image: repeating-linear-gradient(
+        0deg, transparent, transparent 44px,
+        rgba(255,255,255,0.018) 44px, rgba(255,255,255,0.018) 88px
       );
     }
-
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-track { background: var(--navy); }
-    ::-webkit-scrollbar-thumb { background: #1a3055; border-radius: 3px; }
-
-    /* Flag image */
-    .flag-img {
-      width: 36px; height: 27px;
-      object-fit: cover;
-      border-radius: 4px;
-      box-shadow: 0 1px 4px rgba(0,0,0,.5);
-      flex-shrink: 0;
+    .hero-stripe {
+      position:absolute; inset:0;
+      background: linear-gradient(135deg,
+        transparent 0%, transparent 30%,
+        rgba(200,16,46,0.12) 30%, rgba(200,16,46,0.12) 55%,
+        transparent 55%);
     }
+
+    .sticker-btn { transition: transform .1s, box-shadow .1s; }
+    .sticker-btn:active { transform: scale(.88) !important; }
+    .sticker-owned   { background:#16a34a; color:#fff; box-shadow:0 2px 8px #16a34a66; }
+    .sticker-dup     { background:#b45309; color:#fff; box-shadow:0 2px 8px #b4530966; }
+    .sticker-missing { background:#0f2040; color:#4a6080; border:1px solid #1a3050; }
+
+    .team-card { background:linear-gradient(135deg,#0a1e38,#0d2240); border:1px solid #1a3055; border-radius:16px; overflow:hidden; }
+    .flag-img  { width:36px; height:27px; object-fit:cover; border-radius:4px; box-shadow:0 1px 4px rgba(0,0,0,.5); flex-shrink:0; }
+
+    ::-webkit-scrollbar { width:5px; }
+    ::-webkit-scrollbar-track { background:#071c35; }
+    ::-webkit-scrollbar-thumb { background:#1a3055; border-radius:3px; }
   </style>
 </head>
 <body>
 <div id="root"></div>
-
 <script type="text/babel">
 
-/* ── DATA ─────────────────────────────────────────────────────────── */
+/* ── CONSTANTS ───────────────────────────────────────────────────────── */
 const TOTAL     = 980;
 const TEAM_SIZE = 20;
-const STORAGE_KEY = "wc2026_stickers";
+
+const USERS = {
+  DARF: {
+    label:    "DARF",
+    emoji:    "🔵",
+    storageKey: "wc2026_stickers_DARF",
+    accent:   "#003DA5",
+    accentLight: "#4d8ffc",
+    cardBg:   "linear-gradient(135deg,#001a4d 0%,#002d80 60%,#003DA5 100%)",
+    cardBorder: "#1a4db5",
+  },
+  SALCAST: {
+    label:    "SALCAST",
+    emoji:    "🔴",
+    storageKey: "wc2026_stickers_SALCAST",
+    accent:   "#C8102E",
+    accentLight: "#f04060",
+    cardBg:   "linear-gradient(135deg,#4d0010 0%,#800018 60%,#C8102E 100%)",
+    cardBorder: "#b01020",
+  },
+};
+
+const SESSION_KEY = "wc2026_active_user";
 
 const TEAMS = [
   { name:"Album Intro & Icons", code:null,     accent:"#C9A84C" },
@@ -177,84 +168,74 @@ const TEAMS = [
   { name:"Egypt",               code:"eg",      accent:"#CE1126" },
 ];
 
+/* ── HELPERS ─────────────────────────────────────────────────────────── */
 function flagUrl(code) {
-  if (!code) return null;
-  return `https://flagcdn.com/w80/${code}.png`;
+  return code ? `https://flagcdn.com/w80/${code}.png` : null;
+}
+function loadStickers(key) {
+  try {
+    const s = localStorage.getItem(key);
+    if (s) return JSON.parse(s);
+  } catch {}
+  return new Array(TOTAL).fill(0);
+}
+function userStats(key) {
+  const s = loadStickers(key);
+  const owned = s.filter(x=>x===1).length;
+  const dup   = s.filter(x=>x===2).length;
+  return { owned, dup, missing: TOTAL - owned - dup, pct: ((owned+dup)/TOTAL*100).toFixed(1) };
 }
 
-/* ── TROPHY SVG ───────────────────────────────────────────────────── */
-function TrophySVG() {
+/* ── SVG COMPONENTS ──────────────────────────────────────────────────── */
+function TrophySVG({size=110}) {
   return (
-    <svg className="trophy-glow" viewBox="0 0 160 220" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width:110,height:"auto"}}>
-      {/* Stars */}
+    <svg className="trophy-glow" viewBox="0 0 160 220" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width:size,height:"auto"}}>
       <text x="80" y="16" textAnchor="middle" fontSize="14" fill="#FFD700" fontFamily="serif">★ ★ ★ ★ ★</text>
-      {/* Globe */}
       <circle cx="80" cy="44" r="24" fill="#0d4a7a"/>
       <ellipse cx="80" cy="44" rx="24" ry="11" fill="none" stroke="#4db8d4" strokeWidth="1.2" opacity="0.7"/>
       <line x1="80" y1="20" x2="80" y2="68" stroke="#4db8d4" strokeWidth="1.2" opacity="0.7"/>
       <line x1="56" y1="44" x2="104" y2="44" stroke="#4db8d4" strokeWidth="1.2" opacity="0.7"/>
-      {/* Continents blob */}
       <ellipse cx="72" cy="36" rx="8" ry="5" fill="#1e7e44" opacity="0.85"/>
       <ellipse cx="90" cy="48" rx="6" ry="4" fill="#1e7e44" opacity="0.85"/>
       <ellipse cx="78" cy="52" rx="4" ry="3" fill="#1e7e44" opacity="0.7"/>
-      {/* Globe shine */}
       <ellipse cx="70" cy="35" rx="7" ry="5" fill="white" opacity="0.1"/>
-      {/* Cup body */}
       <path d="M 46 68 Q 42 110 46 148 L 114 148 Q 118 110 114 68 Z" fill="url(#cupGrad)"/>
-      {/* Cup highlight */}
       <path d="M 58 72 Q 55 108 58 142 L 72 142 Q 69 108 66 72 Z" fill="white" opacity="0.15"/>
-      {/* Left handle */}
       <path d="M 48 78 Q 12 92 16 128 Q 18 150 48 152" fill="none" stroke="url(#handleGrad)" strokeWidth="10" strokeLinecap="round"/>
-      {/* Right handle */}
       <path d="M 112 78 Q 148 92 144 128 Q 142 150 112 152" fill="none" stroke="url(#handleGrad)" strokeWidth="10" strokeLinecap="round"/>
-      {/* Stem */}
       <rect x="68" y="148" width="24" height="38" rx="2" fill="url(#stemGrad)"/>
-      {/* Base layers */}
       <rect x="54" y="184" width="52" height="12" rx="3" fill="url(#baseGrad)"/>
       <rect x="44" y="194" width="72" height="14" rx="4" fill="url(#base2Grad)"/>
-      {/* Base glow */}
       <ellipse cx="80" cy="210" rx="44" ry="5" fill="#C9A84C" opacity="0.2"/>
-      {/* Gradients */}
       <defs>
         <linearGradient id="cupGrad" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%"   stopColor="#a37c28"/>
-          <stop offset="40%"  stopColor="#FFD700"/>
-          <stop offset="70%"  stopColor="#C9A84C"/>
-          <stop offset="100%" stopColor="#8a6010"/>
+          <stop offset="0%"   stopColor="#a37c28"/><stop offset="40%" stopColor="#FFD700"/>
+          <stop offset="70%"  stopColor="#C9A84C"/><stop offset="100%" stopColor="#8a6010"/>
         </linearGradient>
         <linearGradient id="handleGrad" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%"   stopColor="#a37c28"/>
-          <stop offset="50%"  stopColor="#FFD700"/>
+          <stop offset="0%"   stopColor="#a37c28"/><stop offset="50%" stopColor="#FFD700"/>
           <stop offset="100%" stopColor="#a37c28"/>
         </linearGradient>
         <linearGradient id="stemGrad" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%"   stopColor="#8a6010"/>
-          <stop offset="50%"  stopColor="#FFD700"/>
+          <stop offset="0%"   stopColor="#8a6010"/><stop offset="50%" stopColor="#FFD700"/>
           <stop offset="100%" stopColor="#8a6010"/>
         </linearGradient>
         <linearGradient id="baseGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor="#FFD700"/>
-          <stop offset="100%" stopColor="#a37c28"/>
+          <stop offset="0%"   stopColor="#FFD700"/><stop offset="100%" stopColor="#a37c28"/>
         </linearGradient>
         <linearGradient id="base2Grad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor="#C9A84C"/>
-          <stop offset="100%" stopColor="#7a5510"/>
+          <stop offset="0%"   stopColor="#C9A84C"/><stop offset="100%" stopColor="#7a5510"/>
         </linearGradient>
       </defs>
     </svg>
   );
 }
 
-/* ── SOCCER BALL SVG ──────────────────────────────────────────────── */
 function SoccerBall({size=48, opacity=0.18}) {
   return (
     <svg viewBox="0 0 100 100" style={{width:size,height:size,opacity}} xmlns="http://www.w3.org/2000/svg">
       <circle cx="50" cy="50" r="48" fill="white" stroke="#ccc" strokeWidth="1"/>
-      <polygon points="50,10 62,32 88,32 68,50 76,76 50,60 24,76 32,50 12,32 38,32" fill="none"/>
-      {/* Pentagon center */}
       <polygon points="50,28 62,38 58,52 42,52 38,38" fill="black"/>
-      {/* Side pentagons */}
-      <polygon points="50,10 62,14 68,26 56,32 44,32 32,26 38,14" fill="none" stroke="black" strokeWidth="2.5"/>
       <polygon points="78,38 90,44 88,58 76,64 66,56 68,42" fill="black"/>
       <polygon points="22,38 10,44 12,58 24,64 34,56 32,42" fill="black"/>
       <polygon points="62,72 72,68 80,76 74,88 60,88 54,78" fill="black"/>
@@ -263,62 +244,142 @@ function SoccerBall({size=48, opacity=0.18}) {
   );
 }
 
-/* ── STORAGE ──────────────────────────────────────────────────────── */
-function getInitialState() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
-  } catch {}
-  return new Array(TOTAL).fill(0);
+/* ── LOGIN SCREEN ────────────────────────────────────────────────────── */
+function LoginScreen({ onSelect }) {
+  return (
+    <div className="min-h-screen flex flex-col" style={{background:"#071c35"}}>
+
+      {/* Mini hero */}
+      <div className="relative overflow-hidden pitch-stripes"
+        style={{background:"linear-gradient(160deg,#071c35 0%,#0a2444 40%,#120820 70%,#1a0508 100%)"}}>
+        <div className="hero-stripe"/>
+        <div className="absolute" style={{top:12,right:12,pointerEvents:"none"}}>
+          <div className="ball-float"><SoccerBall size={56} opacity={0.12}/></div>
+        </div>
+        <div className="absolute" style={{bottom:16,left:8,pointerEvents:"none"}}>
+          <div className="ball-float2"><SoccerBall size={36} opacity={0.09}/></div>
+        </div>
+        <div style={{height:4,background:"linear-gradient(90deg,#C8102E,#C9A84C,#FFD700,#C9A84C,#C8102E)"}}/>
+        <div className="flex flex-col items-center px-4 pt-8 pb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <div style={{height:1,width:32,background:"linear-gradient(90deg,transparent,#C9A84C)"}}/>
+            <span className="text-xs font-bold tracking-widest uppercase" style={{color:"#C9A84C"}}>FIFA World Cup™</span>
+            <div style={{height:1,width:32,background:"linear-gradient(90deg,#C9A84C,transparent)"}}/>
+          </div>
+          <h1 className="gold-text font-black leading-none mb-2" style={{fontSize:"clamp(52px,15vw,80px)",letterSpacing:"-2px"}}>2026</h1>
+          <div className="mb-2"><TrophySVG size={80}/></div>
+          <p className="text-white font-black text-sm tracking-widest uppercase" style={{letterSpacing:"0.2em"}}>Panini Sticker Album</p>
+        </div>
+        <div style={{height:4,background:"linear-gradient(90deg,#C8102E,#C9A84C,#FFD700,#C9A84C,#C8102E)"}}/>
+      </div>
+
+      {/* User picker */}
+      <div className="flex flex-col items-center flex-1 px-5 py-8 slide-in">
+        <p className="text-white font-black text-xl mb-1">Who's tracking today?</p>
+        <p className="text-sm mb-8" style={{color:"#4a6080"}}>Pick your album to continue</p>
+
+        <div className="flex flex-col gap-5 w-full max-w-sm">
+          {Object.values(USERS).map(user => {
+            const stats = userStats(user.storageKey);
+            return (
+              <button
+                key={user.label}
+                onClick={() => onSelect(user.label)}
+                className="user-card rounded-2xl p-5 text-left relative overflow-hidden"
+                style={{background:user.cardBg, border:`2px solid ${user.cardBorder}`}}
+              >
+                {/* Glow ball decoration */}
+                <div className="absolute" style={{right:-16,top:-16,opacity:0.12,pointerEvents:"none"}}>
+                  <SoccerBall size={90} opacity={1}/>
+                </div>
+
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-4xl">{user.emoji}</span>
+                  <div>
+                    <p className="text-white font-black text-2xl leading-none">{user.label}</p>
+                    <p className="text-xs font-semibold mt-0.5" style={{color:`${user.accentLight}`}}>
+                      {stats.pct}% complete
+                    </p>
+                  </div>
+                </div>
+
+                {/* Mini stats */}
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="rounded-xl py-2 text-center" style={{background:"rgba(0,0,0,0.3)"}}>
+                    <div className="text-lg font-black text-green-400">{stats.owned}</div>
+                    <div className="text-xs" style={{color:"#86efac"}}>✅ Got</div>
+                  </div>
+                  <div className="rounded-xl py-2 text-center" style={{background:"rgba(0,0,0,0.3)"}}>
+                    <div className="text-lg font-black text-red-400">{stats.missing}</div>
+                    <div className="text-xs" style={{color:"#fca5a5"}}>❌ Need</div>
+                  </div>
+                  <div className="rounded-xl py-2 text-center" style={{background:"rgba(0,0,0,0.3)"}}>
+                    <div className="text-lg font-black text-yellow-400">{stats.dup}</div>
+                    <div className="text-xs" style={{color:"#fde68a"}}>🔄 Swap</div>
+                  </div>
+                </div>
+
+                {/* Progress bar */}
+                <div className="mt-3 rounded-full overflow-hidden" style={{height:6,background:"rgba(0,0,0,0.4)"}}>
+                  <div className="h-full rounded-full transition-all"
+                    style={{width:`${stats.pct}%`,background:"linear-gradient(90deg,#C8102E,#C9A84C,#FFD700)"}}/>
+                </div>
+
+                {/* Arrow */}
+                <div className="absolute right-4 top-1/2" style={{transform:"translateY(-50%)",color:user.accentLight,fontSize:22,fontWeight:900}}>›</div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div style={{padding:"16px",textAlign:"center"}}>
+        <p className="text-xs" style={{color:"#1a3055"}}>Made with ⚽ for DARF & SALCAST</p>
+      </div>
+    </div>
+  );
 }
 
-/* ── APP ──────────────────────────────────────────────────────────── */
-function App() {
-  const [stickers, setStickers] = React.useState(getInitialState);
+/* ── TRACKER SCREEN ──────────────────────────────────────────────────── */
+function TrackerScreen({ username, onSwitchUser }) {
+  const user = USERS[username];
+  const [stickers, setStickers] = React.useState(() => loadStickers(user.storageKey));
   const [search, setSearch]     = React.useState("");
   const teamRefs = React.useRef({});
 
   React.useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(stickers));
-  }, [stickers]);
+    localStorage.setItem(user.storageKey, JSON.stringify(stickers));
+  }, [stickers, user.storageKey]);
 
   const cycle = (idx) => {
-    setStickers(prev => {
-      const next = [...prev];
-      next[idx] = (next[idx] + 1) % 3;
-      return next;
-    });
+    setStickers(prev => { const n=[...prev]; n[idx]=(n[idx]+1)%3; return n; });
   };
 
-  const owned   = stickers.filter(s => s === 1).length;
-  const dup     = stickers.filter(s => s === 2).length;
+  const owned   = stickers.filter(s=>s===1).length;
+  const dup     = stickers.filter(s=>s===2).length;
   const missing = TOTAL - owned - dup;
-  const pct     = ((owned + dup) / TOTAL * 100).toFixed(1);
+  const pct     = ((owned+dup)/TOTAL*100).toFixed(1);
 
   const handleSearch = (e) => {
     const val = e.target.value;
     setSearch(val);
-    const num = parseInt(val, 10);
-    if (num >= 1 && num <= TOTAL) {
-      const ti = Math.floor((num - 1) / TEAM_SIZE);
-      teamRefs.current[ti]?.scrollIntoView({ behavior:"smooth", block:"start" });
+    const num = parseInt(val,10);
+    if (num>=1 && num<=TOTAL) {
+      const ti = Math.floor((num-1)/TEAM_SIZE);
+      teamRefs.current[ti]?.scrollIntoView({behavior:"smooth",block:"start"});
     }
   };
 
-  const highlightNum = search ? parseInt(search, 10) : null;
-  const numTeams = Math.ceil(TOTAL / TEAM_SIZE);
+  const highlightNum = search ? parseInt(search,10) : null;
+  const numTeams = Math.ceil(TOTAL/TEAM_SIZE);
 
   return (
     <div className="min-h-screen" style={{background:"#071c35"}}>
 
-      {/* ── HERO BANNER ─────────────────────────────────────────────── */}
+      {/* ── HERO ─────────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden pitch-stripes"
-        style={{background:"linear-gradient(160deg,#071c35 0%,#0a2444 35%,#120820 65%,#1a0508 100%)", paddingBottom:32}}>
-
-        {/* Diagonal red stripe */}
+        style={{background:"linear-gradient(160deg,#071c35 0%,#0a2444 35%,#120820 65%,#1a0508 100%)",paddingBottom:32}}>
         <div className="hero-stripe"/>
-
-        {/* Decorative balls */}
         <div className="absolute" style={{top:18,right:16,pointerEvents:"none"}}>
           <div className="ball-float"><SoccerBall size={64} opacity={0.13}/></div>
         </div>
@@ -329,81 +390,79 @@ function App() {
           <div className="ball-float3"><SoccerBall size={28} opacity={0.07}/></div>
         </div>
 
-        {/* Gold top line */}
-        <div style={{height:4, background:"linear-gradient(90deg,#C8102E,#C9A84C,#FFD700,#C9A84C,#C8102E)"}}/>
+        <div style={{height:4,background:"linear-gradient(90deg,#C8102E,#C9A84C,#FFD700,#C9A84C,#C8102E)"}}/>
 
         <div className="flex flex-col items-center px-4 pt-8 pb-2">
-
-          {/* Official label */}
           <div className="flex items-center gap-2 mb-3">
             <div style={{height:1,width:40,background:"linear-gradient(90deg,transparent,#C9A84C)"}}/>
             <span className="text-xs font-bold tracking-widest uppercase" style={{color:"#C9A84C"}}>FIFA World Cup™</span>
             <div style={{height:1,width:40,background:"linear-gradient(90deg,#C9A84C,transparent)"}}/>
           </div>
-
-          {/* Year */}
-          <h1 className="gold-text font-black leading-none mb-1" style={{fontSize:"clamp(64px,18vw,96px)",letterSpacing:"-2px"}}>
-            2026
-          </h1>
-
-          {/* Trophy */}
-          <div className="my-2">
-            <TrophySVG/>
-          </div>
-
-          {/* Subtitle */}
+          <h1 className="gold-text font-black leading-none mb-1" style={{fontSize:"clamp(64px,18vw,96px)",letterSpacing:"-2px"}}>2026</h1>
+          <div className="my-2"><TrophySVG/></div>
           <p className="text-white font-black text-base tracking-widest uppercase mb-1" style={{letterSpacing:"0.2em"}}>
             Panini Sticker Album
           </p>
-          <p className="text-sm mb-5" style={{color:"#C9A84C"}}>
-            DARF's Tracker · 980 Stickers · 49 Teams
-          </p>
+
+          {/* User badge */}
+          <div className="flex items-center gap-2 mb-4 rounded-full px-4 py-1.5"
+            style={{background:user.cardBg,border:`1.5px solid ${user.cardBorder}`}}>
+            <span className="text-lg">{user.emoji}</span>
+            <span className="font-black text-white text-sm tracking-wide">{user.label}'s Tracker</span>
+            <button onClick={onSwitchUser}
+              className="ml-1 text-xs font-bold rounded-full px-2 py-0.5"
+              style={{background:"rgba(0,0,0,0.35)",color:user.accentLight}}>
+              Switch ↩
+            </button>
+          </div>
 
           {/* Host nations */}
           <div className="flex gap-6 items-center justify-center mb-4">
-            {[{code:"us",name:"USA"},{code:"ca",name:"Canada"},{code:"mx",name:"Mexico"}].map(h => (
+            {[{code:"us",name:"USA"},{code:"ca",name:"Canada"},{code:"mx",name:"Mexico"}].map(h=>(
               <div key={h.code} className="flex flex-col items-center gap-1">
-                <img
-                  src={flagUrl(h.code)}
-                  alt={h.name}
-                  className="flag-img"
-                  style={{width:52,height:36,borderRadius:6,boxShadow:"0 2px 10px rgba(0,0,0,.6)"}}
-                  onError={e=>{ e.target.style.display="none"; }}
-                />
+                <img src={flagUrl(h.code)} alt={h.name}
+                  style={{width:52,height:36,borderRadius:6,objectFit:"cover",boxShadow:"0 2px 10px rgba(0,0,0,.6)"}}
+                  onError={e=>{e.target.style.display="none"}}/>
                 <span className="text-xs font-bold text-gray-300">{h.name}</span>
               </div>
             ))}
           </div>
-
-          {/* Host label */}
           <div className="flex items-center gap-2">
             <div style={{height:1,width:28,background:"linear-gradient(90deg,transparent,#4a6080)"}}/>
             <span className="text-xs text-gray-500">Co-hosted by USA · Canada · Mexico</span>
             <div style={{height:1,width:28,background:"linear-gradient(90deg,#4a6080,transparent)"}}/>
           </div>
         </div>
-
-        {/* Gold bottom line */}
         <div style={{height:4,background:"linear-gradient(90deg,#C8102E,#C9A84C,#FFD700,#C9A84C,#C8102E)",marginTop:16}}/>
       </div>
 
-      {/* ── STICKY CONTROLS ─────────────────────────────────────────── */}
+      {/* ── STICKY CONTROLS ──────────────────────────────────────────── */}
       <div className="sticky top-0 z-20 px-3 pt-3 pb-3"
         style={{background:"rgba(7,28,53,0.97)",backdropFilter:"blur(12px)",borderBottom:"1px solid #1a3055"}}>
 
+        {/* User indicator strip */}
+        <div className="flex items-center justify-between mb-2 rounded-lg px-3 py-1"
+          style={{background:user.cardBg,border:`1px solid ${user.cardBorder}`}}>
+          <span className="text-xs font-black text-white">{user.emoji} {user.label}'s Album</span>
+          <button onClick={onSwitchUser} className="text-xs font-bold rounded-full px-2 py-0.5"
+            style={{background:"rgba(0,0,0,0.35)",color:user.accentLight}}>
+            Switch user ↩
+          </button>
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2 mb-3">
-          <div className="rounded-xl p-2 text-center relative overflow-hidden"
+          <div className="rounded-xl p-2 text-center"
             style={{background:"linear-gradient(135deg,#0d3a1a,#164d25)",border:"1px solid #1a5c2a"}}>
             <div className="text-2xl font-black" style={{color:"#4ade80"}}>{owned}</div>
             <div className="text-xs font-bold" style={{color:"#86efac"}}>✅ Collected</div>
           </div>
-          <div className="rounded-xl p-2 text-center relative overflow-hidden"
+          <div className="rounded-xl p-2 text-center"
             style={{background:"linear-gradient(135deg,#3a0d10,#5a1015)",border:"1px solid #7f1d1d"}}>
             <div className="text-2xl font-black" style={{color:"#fca5a5"}}>{missing}</div>
             <div className="text-xs font-bold" style={{color:"#fca5a5"}}>❌ Missing</div>
           </div>
-          <div className="rounded-xl p-2 text-center relative overflow-hidden"
+          <div className="rounded-xl p-2 text-center"
             style={{background:"linear-gradient(135deg,#3a2200,#4d2e00)",border:"1px solid #713f12"}}>
             <div className="text-2xl font-black" style={{color:"#fcd34d"}}>{dup}</div>
             <div className="text-xs font-bold" style={{color:"#fde68a"}}>🔄 Duplicates</div>
@@ -413,10 +472,7 @@ function App() {
         {/* Progress bar */}
         <div className="relative w-full rounded-full mb-1 overflow-hidden" style={{height:10,background:"#0d2040"}}>
           <div className="h-full rounded-full transition-all duration-700"
-            style={{
-              width:`${pct}%`,
-              background:"linear-gradient(90deg,#C8102E,#C9A84C,#FFD700)"
-            }}/>
+            style={{width:`${pct}%`,background:"linear-gradient(90deg,#C8102E,#C9A84C,#FFD700)"}}/>
         </div>
         <p className="text-center text-xs mb-2" style={{color:"#C9A84C"}}>
           {pct}% complete — {owned+dup} / {TOTAL} stickers
@@ -435,88 +491,65 @@ function App() {
         />
       </div>
 
-      {/* ── LEGEND ──────────────────────────────────────────────────── */}
+      {/* ── LEGEND ───────────────────────────────────────────────────── */}
       <div className="flex gap-4 justify-center text-xs px-3 py-2" style={{color:"#4a6080"}}>
         <span className="flex items-center gap-1">
-          <span className="w-4 h-4 rounded inline-block" style={{background:"#0f2040",border:"1px solid #1a3050"}}/>
-          Missing
+          <span className="w-4 h-4 rounded inline-block" style={{background:"#0f2040",border:"1px solid #1a3050"}}/>Missing
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-4 h-4 rounded inline-block bg-green-600"/>
-          Owned (1×)
+          <span className="w-4 h-4 rounded inline-block bg-green-600"/>Owned (1×)
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-4 h-4 rounded inline-block" style={{background:"#b45309"}}/>
-          Duplicate (2×)
+          <span className="w-4 h-4 rounded inline-block" style={{background:"#b45309"}}/>Duplicate (2×)
         </span>
       </div>
 
-      {/* ── TEAMS ───────────────────────────────────────────────────── */}
+      {/* ── TEAMS ────────────────────────────────────────────────────── */}
       <div className="px-3 pb-10 pt-1">
-        {Array.from({length: numTeams}, (_, ti) => {
-          const start = ti * TEAM_SIZE;
-          const end   = Math.min(start + TEAM_SIZE, TOTAL);
-          const team  = TEAMS[ti] || { name:`Team ${ti+1}`, code:null, accent:"#C9A84C" };
-          const slice = stickers.slice(start, end);
-          const tOwned  = slice.filter(s=>s===1).length;
-          const tDup    = slice.filter(s=>s===2).length;
-          const tTotal  = end - start;
-          const complete = tOwned + tDup === tTotal;
-          const fUrl = flagUrl(team.code);
+        {Array.from({length:numTeams},(_,ti)=>{
+          const start  = ti*TEAM_SIZE;
+          const end    = Math.min(start+TEAM_SIZE,TOTAL);
+          const team   = TEAMS[ti]||{name:`Team ${ti+1}`,code:null,accent:"#C9A84C"};
+          const slice  = stickers.slice(start,end);
+          const tOwned = slice.filter(s=>s===1).length;
+          const tDup   = slice.filter(s=>s===2).length;
+          const tTotal = end-start;
+          const complete = tOwned+tDup===tTotal;
+          const fUrl   = flagUrl(team.code);
 
           return (
             <div key={ti} ref={el=>teamRefs.current[ti]=el} className="team-card mb-4">
-              {/* Colored top accent bar */}
               <div style={{height:3,background:`linear-gradient(90deg,${team.accent},${team.accent}88,transparent)`}}/>
-
-              {/* Team header */}
               <div className="flex items-center justify-between px-3 py-2">
                 <div className="flex items-center gap-2">
                   {fUrl
-                    ? <img src={fUrl} alt={team.name} className="flag-img"
-                        onError={e=>{ e.target.style.display="none"; }}/>
+                    ? <img src={fUrl} alt={team.name} className="flag-img" onError={e=>{e.target.style.display="none"}}/>
                     : <span className="text-2xl">🌍</span>
                   }
                   <span className="font-black text-white text-sm">{team.name}</span>
                 </div>
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                  complete
-                    ? "text-green-200"
-                    : "text-gray-400"
-                }`} style={{background: complete ? "#14532d" : "#0d2040",border:`1px solid ${complete?"#166534":"#1a3055"}`}}>
-                  {tOwned+tDup}/{tTotal}{complete ? " ✅" : ""}
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full"
+                  style={{background:complete?"#14532d":"#0d2040",border:`1px solid ${complete?"#166534":"#1a3055"}`,color:complete?"#86efac":"#4a6080"}}>
+                  {tOwned+tDup}/{tTotal}{complete?" ✅":""}
                 </span>
               </div>
-
-              {/* Sticker grid */}
               <div className="grid grid-cols-5 gap-1.5 px-3 pb-3 sm:grid-cols-8 md:grid-cols-10">
-                {Array.from({length: end-start}, (_, i) => {
-                  const idx   = start + i;
-                  const num   = idx + 1;
+                {Array.from({length:end-start},(_,i)=>{
+                  const idx   = start+i;
+                  const num   = idx+1;
                   const state = stickers[idx];
-                  const isHl  = highlightNum === num;
+                  const isHl  = highlightNum===num;
                   let cls = "sticker-btn rounded-lg flex flex-col items-center justify-center font-black text-sm select-none cursor-pointer relative ";
-                  if      (state === 1) cls += "sticker-owned";
-                  else if (state === 2) cls += "sticker-dup";
-                  else                  cls += "sticker-missing";
-
+                  if      (state===1) cls+="sticker-owned";
+                  else if (state===2) cls+="sticker-dup";
+                  else                cls+="sticker-missing";
                   return (
-                    <button
-                      key={idx}
-                      onClick={() => cycle(idx)}
-                      className={cls}
-                      style={{
-                        height:"52px",
-                        transform: isHl ? "scale(1.12)" : undefined,
-                        outline: isHl ? "3px solid #FFD700" : undefined,
-                        outlineOffset: isHl ? "2px" : undefined,
-                        zIndex: isHl ? 10 : undefined,
-                      }}
-                      aria-label={`Sticker ${num}`}
-                    >
+                    <button key={idx} onClick={()=>cycle(idx)} className={cls}
+                      style={{height:"52px",transform:isHl?"scale(1.12)":undefined,outline:isHl?"3px solid #FFD700":undefined,outlineOffset:isHl?"2px":undefined,zIndex:isHl?10:undefined}}
+                      aria-label={`Sticker ${num}`}>
                       <span className="leading-none">{num}</span>
-                      {state === 2 && (
-                        <span className="absolute -top-1.5 -right-1.5 text-white text-xs font-black rounded-full flex items-center justify-center leading-none"
+                      {state===2&&(
+                        <span className="absolute -top-1.5 -right-1.5 text-white font-black rounded-full flex items-center justify-center"
                           style={{width:20,height:20,background:"#ea580c",fontSize:10}}>×2</span>
                       )}
                     </button>
@@ -528,22 +561,48 @@ function App() {
         })}
       </div>
 
-      {/* ── FOOTER ──────────────────────────────────────────────────── */}
+      {/* ── FOOTER ───────────────────────────────────────────────────── */}
       <div style={{background:"linear-gradient(0deg,#030d1a,#071c35)",borderTop:"1px solid #1a3055",padding:"24px 16px"}}>
         <div className="flex justify-center gap-3 mb-3">
-          {["🇺🇸","🇨🇦","🇲🇽"].map(f=>(
-            <span key={f} className="text-2xl">{f}</span>
-          ))}
+          {["🇺🇸","🇨🇦","🇲🇽"].map(f=><span key={f} className="text-2xl">{f}</span>)}
         </div>
         <p className="text-center text-xs font-bold mb-1" style={{color:"#C9A84C"}}>FIFA World Cup 2026™</p>
-        <p className="text-center text-xs" style={{color:"#2a4060"}}>Made with ⚽ for DARF</p>
+        <p className="text-center text-xs mb-3" style={{color:"#2a4060"}}>Made with ⚽ for DARF & SALCAST</p>
+        <div className="flex justify-center">
+          <button onClick={onSwitchUser}
+            className="text-xs font-bold rounded-full px-4 py-2"
+            style={{background:user.cardBg,border:`1px solid ${user.cardBorder}`,color:user.accentLight}}>
+            {user.emoji} Switch to other album ↩
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<App/>);
+/* ── ROOT ────────────────────────────────────────────────────────────── */
+function App() {
+  const [activeUser, setActiveUser] = React.useState(() => {
+    return sessionStorage.getItem(SESSION_KEY) || null;
+  });
+
+  const handleSelect = (username) => {
+    sessionStorage.setItem(SESSION_KEY, username);
+    setActiveUser(username);
+    window.scrollTo(0,0);
+  };
+
+  const handleSwitch = () => {
+    sessionStorage.removeItem(SESSION_KEY);
+    setActiveUser(null);
+    window.scrollTo(0,0);
+  };
+
+  if (!activeUser) return <LoginScreen onSelect={handleSelect}/>;
+  return <TrackerScreen username={activeUser} onSwitchUser={handleSwitch}/>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 
 <script>
