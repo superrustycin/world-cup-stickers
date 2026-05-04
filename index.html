@@ -20,26 +20,6 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <script>
-    const FIREBASE_CONFIG = {
-      apiKey:            "AIzaSyBX2abJBRp3aHK_Fr5ArASapzpO6lxZvtw",
-      authDomain:        "wc2026-stickers-b73b2.firebaseapp.com",
-      databaseURL:       "https://wc2026-stickers-b73b2-default-rtdb.firebaseio.com",
-      projectId:         "wc2026-stickers-b73b2",
-      storageBucket:     "wc2026-stickers-b73b2.firebasestorage.app",
-      messagingSenderId: "470643210123",
-      appId:             "1:470643210123:web:e7406d3a9c6c4bbb26a18e",
-    };
-
-    let _db = null;
-    const CONFIG_READY = true;
-    try {
-      firebase.initializeApp(FIREBASE_CONFIG);
-      _db = firebase.database();
-    } catch(e) { console.error("Firebase init failed", e); }
-    function dbRef(path) { return _db ? _db.ref(path) : null; }
-  </script>
-
   <style>
     * { box-sizing: border-box; }
     body { background: #071c35; margin: 0; }
@@ -733,6 +713,24 @@ function App() {
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+<script>
+  // Firebase init — must run after firebase-app-compat.js is loaded
+  var _db = null;
+  var CONFIG_READY = true;
+  try {
+    firebase.initializeApp({
+      apiKey:            "AIzaSyBX2abJBRp3aHK_Fr5ArASapzpO6lxZvtw",
+      authDomain:        "wc2026-stickers-b73b2.firebaseapp.com",
+      databaseURL:       "https://wc2026-stickers-b73b2-default-rtdb.firebaseio.com",
+      projectId:         "wc2026-stickers-b73b2",
+      storageBucket:     "wc2026-stickers-b73b2.firebasestorage.app",
+      messagingSenderId: "470643210123",
+      appId:             "1:470643210123:web:e7406d3a9c6c4bbb26a18e",
+    });
+    _db = firebase.database();
+  } catch(e) { console.error("Firebase init failed", e); }
+  function dbRef(path) { return _db ? _db.ref(path) : null; }
 </script>
 <script>
   if ("serviceWorker" in navigator) {
