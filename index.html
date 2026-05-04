@@ -10,10 +10,43 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icon-192.svg" />
   <title>⚽ FIFA World Cup 2026 Stickers</title>
+
+  <!-- Firebase Realtime Database (compat SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- ════════════════════════════════════════════════════════
+       STEP 1 ── Paste your Firebase config here
+       Get it from: console.firebase.google.com
+         → your project → Project Settings → Your apps → SDK setup
+       ════════════════════════════════════════════════════════ -->
+  <script>
+    const FIREBASE_CONFIG = {
+      apiKey:            "PASTE_YOUR_apiKey_HERE",
+      authDomain:        "PASTE_YOUR_authDomain_HERE",
+      databaseURL:       "PASTE_YOUR_databaseURL_HERE",
+      projectId:         "PASTE_YOUR_projectId_HERE",
+      storageBucket:     "PASTE_YOUR_storageBucket_HERE",
+      messagingSenderId: "PASTE_YOUR_messagingSenderId_HERE",
+      appId:             "PASTE_YOUR_appId_HERE",
+    };
+
+    let _db = null;
+    const CONFIG_READY = !FIREBASE_CONFIG.apiKey.startsWith("PASTE");
+    if (CONFIG_READY) {
+      try {
+        firebase.initializeApp(FIREBASE_CONFIG);
+        _db = firebase.database();
+      } catch(e) { console.error("Firebase init failed", e); }
+    }
+    function dbRef(path) { return _db ? _db.ref(path) : null; }
+  </script>
+
   <style>
     * { box-sizing: border-box; }
     body { background: #071c35; margin: 0; }
@@ -25,65 +58,51 @@
     .gold-text {
       background: linear-gradient(90deg, #a37c28, #FFD700, #ffe066, #FFD700, #a37c28);
       background-size: 300% auto;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: shimmer 4s linear infinite;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; animation: shimmer 4s linear infinite;
     }
 
-    @keyframes float  { 0%,100%{transform:translateY(0)    rotate(0deg)}  50%{transform:translateY(-12px) rotate(8deg)}  }
-    @keyframes float2 { 0%,100%{transform:translateY(0)    rotate(0deg)}  50%{transform:translateY(-8px)  rotate(-5deg)} }
-    @keyframes float3 { 0%,100%{transform:translateY(0)    rotate(0deg)}  50%{transform:translateY(-16px) rotate(12deg)} }
+    @keyframes float  { 0%,100%{transform:translateY(0) rotate(0deg)}  50%{transform:translateY(-12px) rotate(8deg)}  }
+    @keyframes float2 { 0%,100%{transform:translateY(0) rotate(0deg)}  50%{transform:translateY(-8px)  rotate(-5deg)} }
+    @keyframes float3 { 0%,100%{transform:translateY(0) rotate(0deg)}  50%{transform:translateY(-16px) rotate(12deg)} }
     .ball-float  { animation: float  6s  ease-in-out infinite; }
     .ball-float2 { animation: float2 8s  ease-in-out infinite; }
     .ball-float3 { animation: float3 9s 2s ease-in-out infinite; }
 
     @keyframes trophy-glow {
-      0%,100% { filter: drop-shadow(0 0 12px #C9A84C88); }
-      50%      { filter: drop-shadow(0 0 28px #FFD70099); }
+      0%,100%{ filter:drop-shadow(0 0 12px #C9A84C88); }
+      50%    { filter:drop-shadow(0 0 28px #FFD70099); }
     }
     .trophy-glow { animation: trophy-glow 3s ease-in-out infinite; }
 
-    @keyframes slide-in {
-      from { opacity:0; transform:translateY(24px); }
-      to   { opacity:1; transform:translateY(0); }
-    }
+    @keyframes slide-in { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
     .slide-in { animation: slide-in .35s ease-out both; }
+
+    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .sync-dot { animation: pulse-dot 1.2s ease-in-out infinite; }
 
     .pitch-stripes {
       background-image: repeating-linear-gradient(
         0deg, transparent, transparent 44px,
-        rgba(255,255,255,0.018) 44px, rgba(255,255,255,0.018) 88px
-      );
+        rgba(255,255,255,0.018) 44px, rgba(255,255,255,0.018) 88px);
     }
     .hero-stripe {
-      position: absolute; inset: 0; pointer-events: none;
-      background: linear-gradient(135deg,
-        transparent 0%, transparent 30%,
-        rgba(200,16,46,0.12) 30%, rgba(200,16,46,0.12) 55%,
-        transparent 55%);
+      position:absolute; inset:0; pointer-events:none;
+      background:linear-gradient(135deg,transparent 30%,rgba(200,16,46,.12) 30% 55%,transparent 55%);
     }
 
-    /* ── Sticker buttons ── */
-    .sticker-btn { transition: transform .1s, box-shadow .1s; }
-    .sticker-btn:active { transform: scale(.88) !important; }
-    .s-missing { background:#0f2040; color:#4a6080; border:1px solid #1a3050; }
-    .s-owned   { background:#16a34a; color:#fff;    box-shadow:0 2px 8px #16a34a55; }
-    .s-dup     { background:#b45309; color:#fff;    box-shadow:0 2px 8px #b4530955; }
-    /* Foil sticker glow when owned */
-    .s-foil-owned  { background:linear-gradient(135deg,#14532d,#16a34a); border:1px solid #4ade80; }
-    .s-foil-missing{ background:linear-gradient(135deg,#1a1000,#2a1800); color:#C9A84C; border:1px solid #3a2800; }
+    .sticker-btn { transition:transform .1s, box-shadow .1s; }
+    .sticker-btn:active { transform:scale(.88) !important; }
+    .s-missing      { background:#0f2040;      color:#4a6080; border:1px solid #1a3050; }
+    .s-owned        { background:#16a34a;      color:#fff;    box-shadow:0 2px 8px #16a34a55; }
+    .s-dup          { background:#b45309;      color:#fff;    box-shadow:0 2px 8px #b4530955; }
+    .s-foil-missing { background:linear-gradient(135deg,#1a1000,#2a1800); color:#C9A84C; border:1px solid #3a2800; }
+    .s-foil-owned   { background:linear-gradient(135deg,#14532d,#16a34a); border:1px solid #4ade80; }
 
-    .team-card {
-      background: linear-gradient(135deg,#0a1e38,#0d2240);
-      border: 1px solid #1a3055;
-      border-radius: 16px;
-      overflow: hidden;
-    }
-    .flag-img { width:36px; height:27px; object-fit:cover; border-radius:4px; box-shadow:0 1px 4px rgba(0,0,0,.5); flex-shrink:0; }
-
-    .user-card { transition: transform .2s, box-shadow .2s; }
-    .user-card:hover { transform: translateY(-4px) scale(1.02); }
+    .team-card { background:linear-gradient(135deg,#0a1e38,#0d2240); border:1px solid #1a3055; border-radius:16px; overflow:hidden; }
+    .flag-img  { width:36px; height:27px; object-fit:cover; border-radius:4px; box-shadow:0 1px 4px rgba(0,0,0,.5); flex-shrink:0; }
+    .user-card { transition:transform .2s, box-shadow .2s; }
+    .user-card:hover { transform:translateY(-4px) scale(1.02); }
 
     ::-webkit-scrollbar { width:5px; }
     ::-webkit-scrollbar-track { background:#071c35; }
@@ -94,139 +113,119 @@
 <div id="root"></div>
 <script type="text/babel">
 
-/* ════════════════════════════════════════════════════════════════════
-   ALBUM DATA  — exact Panini FIFA World Cup 2026 layout
-   Source: checklistinsider.com/2026-panini-fifa-world-cup-sticker
-   ════════════════════════════════════════════════════════════════════ */
-
-// Intro section: 00 + FWC1-FWC8
+/* ═══════════════════════════════════════════════════════════════════
+   ALBUM DATA — exact Panini FIFA World Cup 2026 layout
+   ═══════════════════════════════════════════════════════════════════ */
 const INTRO_SECTION = {
-  id: "INTRO", name: "Introduction & Host Countries", flagCode: null, accent: "#C9A84C",
-  stickers: [
-    { id:"00",   label:"Panini Logo",         type:"foil"   },
-    { id:"FWC1", label:"Official Emblem",      type:"foil"   },
-    { id:"FWC2", label:"Official Emblem",      type:"foil"   },
-    { id:"FWC3", label:"Official Mascots",     type:"foil"   },
-    { id:"FWC4", label:"Official Slogan",      type:"foil"   },
-    { id:"FWC5", label:"Official Ball",        type:"foil"   },
-    { id:"FWC6", label:"Canada — Host",        type:"foil"   },
-    { id:"FWC7", label:"Mexico — Host",        type:"foil"   },
-    { id:"FWC8", label:"USA — Host",           type:"foil"   },
+  id:"INTRO", name:"Introduction & Host Countries", flagCode:null, accent:"#C9A84C",
+  stickers:[
+    {id:"00",   label:"Panini Logo",     type:"foil"},
+    {id:"FWC1", label:"Official Emblem", type:"foil"},
+    {id:"FWC2", label:"Official Emblem", type:"foil"},
+    {id:"FWC3", label:"Mascots",         type:"foil"},
+    {id:"FWC4", label:"Slogan",          type:"foil"},
+    {id:"FWC5", label:"Official Ball",   type:"foil"},
+    {id:"FWC6", label:"Canada – Host",   type:"foil"},
+    {id:"FWC7", label:"Mexico – Host",   type:"foil"},
+    {id:"FWC8", label:"USA – Host",      type:"foil"},
   ]
 };
-
-// FIFA Museum section: FWC9-FWC19 (past World Cup winners)
 const MUSEUM_SECTION = {
-  id: "MUSEUM", name: "FIFA Museum — Past Champions", flagCode: null, accent: "#C9A84C",
-  stickers: [
-    { id:"FWC9",  label:"Italy 1934",         type:"museum" },
-    { id:"FWC10", label:"Italy 1938",         type:"museum" },
-    { id:"FWC11", label:"Uruguay 1950",       type:"museum" },
-    { id:"FWC12", label:"W. Germany 1954",    type:"museum" },
-    { id:"FWC13", label:"Brazil 1958",        type:"museum" },
-    { id:"FWC14", label:"Brazil 1962",        type:"museum" },
-    { id:"FWC15", label:"England 1966",       type:"museum" },
-    { id:"FWC16", label:"Brazil 1970",        type:"museum" },
-    { id:"FWC17", label:"W. Germany 1974",    type:"museum" },
-    { id:"FWC18", label:"Argentina 1978",     type:"museum" },
-    { id:"FWC19", label:"Italy 1982",         type:"museum" },
+  id:"MUSEUM", name:"FIFA Museum — Past Champions", flagCode:null, accent:"#C9A84C",
+  stickers:[
+    {id:"FWC9",  label:"Italy 1934",       type:"museum"},
+    {id:"FWC10", label:"Italy 1938",       type:"museum"},
+    {id:"FWC11", label:"Uruguay 1950",     type:"museum"},
+    {id:"FWC12", label:"W. Germany 1954",  type:"museum"},
+    {id:"FWC13", label:"Brazil 1958",      type:"museum"},
+    {id:"FWC14", label:"Brazil 1962",      type:"museum"},
+    {id:"FWC15", label:"England 1966",     type:"museum"},
+    {id:"FWC16", label:"Brazil 1970",      type:"museum"},
+    {id:"FWC17", label:"W. Germany 1974",  type:"museum"},
+    {id:"FWC18", label:"Argentina 1978",   type:"museum"},
+    {id:"FWC19", label:"Italy 1982",       type:"museum"},
   ]
 };
 
-// 48 teams in album order — each gets 20 stickers
-// Sticker layout per team: #1=Logo FOIL, #13=Team Photo, rest=Players
 const TEAM_DEFS = [
-  { id:"MEX", name:"Mexico",               flagCode:"mx",     accent:"#006847" },
-  { id:"RSA", name:"South Africa",         flagCode:"za",     accent:"#007A4D" },
-  { id:"KOR", name:"South Korea",          flagCode:"kr",     accent:"#CD2E3A" },
-  { id:"CZE", name:"Czechia",              flagCode:"cz",     accent:"#D7141A" },
-  { id:"CAN", name:"Canada",               flagCode:"ca",     accent:"#FF0000" },
-  { id:"BIH", name:"Bosnia & Herzegovina", flagCode:"ba",     accent:"#002395" },
-  { id:"QAT", name:"Qatar",                flagCode:"qa",     accent:"#8D153A" },
-  { id:"SUI", name:"Switzerland",          flagCode:"ch",     accent:"#FF0000" },
-  { id:"BRA", name:"Brazil",               flagCode:"br",     accent:"#009739" },
-  { id:"MAR", name:"Morocco",              flagCode:"ma",     accent:"#C1272D" },
-  { id:"HAI", name:"Haiti",                flagCode:"ht",     accent:"#D21034" },
-  { id:"SCO", name:"Scotland",             flagCode:"gb-sct", accent:"#003F87" },
-  { id:"USA", name:"USA",                  flagCode:"us",     accent:"#B22234" },
-  { id:"PAR", name:"Paraguay",             flagCode:"py",     accent:"#D52B1E" },
-  { id:"AUS", name:"Australia",            flagCode:"au",     accent:"#00247D" },
-  { id:"TUR", name:"Türkiye",              flagCode:"tr",     accent:"#E30A17" },
-  { id:"GER", name:"Germany",              flagCode:"de",     accent:"#555555" },
-  { id:"CUW", name:"Curaçao",              flagCode:"cw",     accent:"#003DA5" },
-  { id:"CIV", name:"Ivory Coast",          flagCode:"ci",     accent:"#F77F00" },
-  { id:"ECU", name:"Ecuador",              flagCode:"ec",     accent:"#FFD100" },
-  { id:"NED", name:"Netherlands",          flagCode:"nl",     accent:"#AE1C28" },
-  { id:"JPN", name:"Japan",               flagCode:"jp",     accent:"#BC002D" },
-  { id:"SWE", name:"Sweden",               flagCode:"se",     accent:"#006AA7" },
-  { id:"TUN", name:"Tunisia",              flagCode:"tn",     accent:"#E70013" },
-  { id:"BEL", name:"Belgium",              flagCode:"be",     accent:"#EF3340" },
-  { id:"EGY", name:"Egypt",               flagCode:"eg",     accent:"#CE1126" },
-  { id:"IRN", name:"Iran",                 flagCode:"ir",     accent:"#239F40" },
-  { id:"NZL", name:"New Zealand",          flagCode:"nz",     accent:"#00247D" },
-  { id:"ESP", name:"Spain",               flagCode:"es",     accent:"#AA151B" },
-  { id:"CPV", name:"Cape Verde",           flagCode:"cv",     accent:"#003893" },
-  { id:"KSA", name:"Saudi Arabia",         flagCode:"sa",     accent:"#006C35" },
-  { id:"URU", name:"Uruguay",              flagCode:"uy",     accent:"#5EB6E4" },
-  { id:"FRA", name:"France",               flagCode:"fr",     accent:"#002395" },
-  { id:"SEN", name:"Senegal",              flagCode:"sn",     accent:"#00853F" },
-  { id:"IRQ", name:"Iraq",                 flagCode:"iq",     accent:"#CE1126" },
-  { id:"NOR", name:"Norway",               flagCode:"no",     accent:"#EF2B2D" },
-  { id:"ARG", name:"Argentina",            flagCode:"ar",     accent:"#74ACDF" },
-  { id:"ALG", name:"Algeria",              flagCode:"dz",     accent:"#006233" },
-  { id:"AUT", name:"Austria",              flagCode:"at",     accent:"#ED2939" },
-  { id:"JOR", name:"Jordan",               flagCode:"jo",     accent:"#007A3D" },
-  { id:"POR", name:"Portugal",             flagCode:"pt",     accent:"#006600" },
-  { id:"COD", name:"Congo DR",             flagCode:"cd",     accent:"#007FFF" },
-  { id:"UZB", name:"Uzbekistan",           flagCode:"uz",     accent:"#1EB53A" },
-  { id:"COL", name:"Colombia",             flagCode:"co",     accent:"#FCD116" },
-  { id:"ENG", name:"England",              flagCode:"gb-eng", accent:"#CF142B" },
-  { id:"CRO", name:"Croatia",              flagCode:"hr",     accent:"#FF0000" },
-  { id:"GHA", name:"Ghana",               flagCode:"gh",     accent:"#006B3F" },
-  { id:"PAN", name:"Panama",               flagCode:"pa",     accent:"#004F9F" },
+  {id:"MEX",name:"Mexico",               flagCode:"mx",    accent:"#006847"},
+  {id:"RSA",name:"South Africa",         flagCode:"za",    accent:"#007A4D"},
+  {id:"KOR",name:"South Korea",          flagCode:"kr",    accent:"#CD2E3A"},
+  {id:"CZE",name:"Czechia",              flagCode:"cz",    accent:"#D7141A"},
+  {id:"CAN",name:"Canada",               flagCode:"ca",    accent:"#FF0000"},
+  {id:"BIH",name:"Bosnia & Herzegovina", flagCode:"ba",    accent:"#002395"},
+  {id:"QAT",name:"Qatar",                flagCode:"qa",    accent:"#8D153A"},
+  {id:"SUI",name:"Switzerland",          flagCode:"ch",    accent:"#FF0000"},
+  {id:"BRA",name:"Brazil",               flagCode:"br",    accent:"#009739"},
+  {id:"MAR",name:"Morocco",              flagCode:"ma",    accent:"#C1272D"},
+  {id:"HAI",name:"Haiti",                flagCode:"ht",    accent:"#D21034"},
+  {id:"SCO",name:"Scotland",             flagCode:"gb-sct",accent:"#003F87"},
+  {id:"USA",name:"USA",                  flagCode:"us",    accent:"#B22234"},
+  {id:"PAR",name:"Paraguay",             flagCode:"py",    accent:"#D52B1E"},
+  {id:"AUS",name:"Australia",            flagCode:"au",    accent:"#00247D"},
+  {id:"TUR",name:"Türkiye",              flagCode:"tr",    accent:"#E30A17"},
+  {id:"GER",name:"Germany",              flagCode:"de",    accent:"#555555"},
+  {id:"CUW",name:"Curaçao",              flagCode:"cw",    accent:"#003DA5"},
+  {id:"CIV",name:"Ivory Coast",          flagCode:"ci",    accent:"#F77F00"},
+  {id:"ECU",name:"Ecuador",              flagCode:"ec",    accent:"#FFD100"},
+  {id:"NED",name:"Netherlands",          flagCode:"nl",    accent:"#AE1C28"},
+  {id:"JPN",name:"Japan",                flagCode:"jp",    accent:"#BC002D"},
+  {id:"SWE",name:"Sweden",               flagCode:"se",    accent:"#006AA7"},
+  {id:"TUN",name:"Tunisia",              flagCode:"tn",    accent:"#E70013"},
+  {id:"BEL",name:"Belgium",              flagCode:"be",    accent:"#EF3340"},
+  {id:"EGY",name:"Egypt",                flagCode:"eg",    accent:"#CE1126"},
+  {id:"IRN",name:"Iran",                 flagCode:"ir",    accent:"#239F40"},
+  {id:"NZL",name:"New Zealand",          flagCode:"nz",    accent:"#00247D"},
+  {id:"ESP",name:"Spain",                flagCode:"es",    accent:"#AA151B"},
+  {id:"CPV",name:"Cape Verde",           flagCode:"cv",    accent:"#003893"},
+  {id:"KSA",name:"Saudi Arabia",         flagCode:"sa",    accent:"#006C35"},
+  {id:"URU",name:"Uruguay",              flagCode:"uy",    accent:"#5EB6E4"},
+  {id:"FRA",name:"France",               flagCode:"fr",    accent:"#002395"},
+  {id:"SEN",name:"Senegal",              flagCode:"sn",    accent:"#00853F"},
+  {id:"IRQ",name:"Iraq",                 flagCode:"iq",    accent:"#CE1126"},
+  {id:"NOR",name:"Norway",               flagCode:"no",    accent:"#EF2B2D"},
+  {id:"ARG",name:"Argentina",            flagCode:"ar",    accent:"#74ACDF"},
+  {id:"ALG",name:"Algeria",              flagCode:"dz",    accent:"#006233"},
+  {id:"AUT",name:"Austria",              flagCode:"at",    accent:"#ED2939"},
+  {id:"JOR",name:"Jordan",               flagCode:"jo",    accent:"#007A3D"},
+  {id:"POR",name:"Portugal",             flagCode:"pt",    accent:"#006600"},
+  {id:"COD",name:"Congo DR",             flagCode:"cd",    accent:"#007FFF"},
+  {id:"UZB",name:"Uzbekistan",           flagCode:"uz",    accent:"#1EB53A"},
+  {id:"COL",name:"Colombia",             flagCode:"co",    accent:"#FCD116"},
+  {id:"ENG",name:"England",              flagCode:"gb-eng",accent:"#CF142B"},
+  {id:"CRO",name:"Croatia",              flagCode:"hr",    accent:"#FF0000"},
+  {id:"GHA",name:"Ghana",                flagCode:"gh",    accent:"#006B3F"},
+  {id:"PAN",name:"Panama",               flagCode:"pa",    accent:"#004F9F"},
 ];
 
-// Build full team sections
 function makeTeamSection(def) {
-  const stickers = Array.from({length:20}, (_,i) => {
-    const n = i + 1;
-    return {
-      id:    `${def.id}${n}`,
-      label: n === 1  ? "Team Logo"   :
-             n === 13 ? "Team Photo"  : `Player ${n < 13 ? n-1 : n-2}`,
-      type:  n === 1  ? "foil"        :
-             n === 13 ? "photo"       : "player",
-    };
-  });
-  return { ...def, stickers };
+  return {
+    ...def,
+    stickers: Array.from({length:20}, (_,i) => ({
+      id:    `${def.id}${i+1}`,
+      label: i===0  ? "Team Logo"  : i===12 ? "Team Photo" : `Player ${i<12?i:i-1}`,
+      type:  i===0  ? "foil"       : i===12 ? "photo"      : "player",
+    }))
+  };
 }
 
-const ALBUM = [
-  INTRO_SECTION,
-  ...TEAM_DEFS.map(makeTeamSection),
-  MUSEUM_SECTION,
-];
-
-// Flat lookup: stickerID → { sectionIdx, sticker }
+const ALBUM = [INTRO_SECTION, ...TEAM_DEFS.map(makeTeamSection), MUSEUM_SECTION];
 const STICKER_MAP = {};
-ALBUM.forEach((section, si) => {
-  section.stickers.forEach(s => { STICKER_MAP[s.id] = { si, sticker:s }; });
-});
-
+ALBUM.forEach((sec,si) => sec.stickers.forEach(s => { STICKER_MAP[s.id] = {si,sticker:s}; }));
 const TOTAL = Object.keys(STICKER_MAP).length; // 980
 
-/* ── USERS ───────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════
+   USERS
+   ═══════════════════════════════════════════════════════════════════ */
 const USERS = {
   DARF: {
-    label:"DARF", emoji:"🔵",
-    storageKey:"wc2026v2_DARF",
+    label:"DARF",    emoji:"🔵",
     accent:"#003DA5", accentLight:"#4d8ffc",
     cardBg:"linear-gradient(135deg,#001a4d,#002d80,#003DA5)",
     cardBorder:"#1a4db5",
   },
   SALCAST: {
     label:"SALCAST", emoji:"🔴",
-    storageKey:"wc2026v2_SALCAST",
     accent:"#C8102E", accentLight:"#f04060",
     cardBg:"linear-gradient(135deg,#4d0010,#800018,#C8102E)",
     cardBorder:"#b01020",
@@ -234,32 +233,19 @@ const USERS = {
 };
 const SESSION_KEY = "wc2026_active_user";
 
-/* ── STORAGE ─────────────────────────────────────────────────────────── */
-function loadData(storageKey) {
-  try {
-    const s = localStorage.getItem(storageKey);
-    if (s) return JSON.parse(s);
-  } catch {}
-  return {};
-}
-function saveData(storageKey, data) {
-  try { localStorage.setItem(storageKey, JSON.stringify(data)); } catch {}
-}
-function getStats(storageKey) {
-  const d = loadData(storageKey);
-  const vals = Object.values(d);
-  const owned   = vals.filter(v=>v===1).length;
-  const dup     = vals.filter(v=>v===2).length;
-  const missing = TOTAL - owned - dup;
-  return { owned, dup, missing, pct:((owned+dup)/TOTAL*100).toFixed(1) };
+/* ═══════════════════════════════════════════════════════════════════
+   FIREBASE HELPERS
+   ═══════════════════════════════════════════════════════════════════ */
+function calcStats(data) {
+  const vals  = Object.values(data);
+  const owned = vals.filter(v=>v===1).length;
+  const dup   = vals.filter(v=>v===2).length;
+  return { owned, dup, missing: TOTAL-owned-dup, pct:((owned+dup)/TOTAL*100).toFixed(1) };
 }
 
-/* ── FLAG URL ────────────────────────────────────────────────────────── */
-function flagUrl(code) {
-  return code ? `https://flagcdn.com/w80/${code}.png` : null;
-}
-
-/* ── SVG COMPONENTS ──────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════
+   SVG COMPONENTS
+   ═══════════════════════════════════════════════════════════════════ */
 function TrophySVG({size=110}) {
   return (
     <svg className="trophy-glow" viewBox="0 0 160 220" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width:size,height:"auto"}}>
@@ -281,11 +267,11 @@ function TrophySVG({size=110}) {
       <rect x="44" y="194" width="72" height="14" rx="4" fill="url(#b2G)"/>
       <ellipse cx="80" cy="210" rx="44" ry="5" fill="#C9A84C" opacity="0.2"/>
       <defs>
-        <linearGradient id="cG"  x1="0" y1="0" x2="1" y2="0"><stop offset="0%"   stopColor="#a37c28"/><stop offset="40%"  stopColor="#FFD700"/><stop offset="70%"  stopColor="#C9A84C"/><stop offset="100%" stopColor="#8a6010"/></linearGradient>
-        <linearGradient id="hG"  x1="0" y1="0" x2="1" y2="0"><stop offset="0%"   stopColor="#a37c28"/><stop offset="50%"  stopColor="#FFD700"/><stop offset="100%" stopColor="#a37c28"/></linearGradient>
-        <linearGradient id="sG"  x1="0" y1="0" x2="1" y2="0"><stop offset="0%"   stopColor="#8a6010"/><stop offset="50%"  stopColor="#FFD700"/><stop offset="100%" stopColor="#8a6010"/></linearGradient>
-        <linearGradient id="bG"  x1="0" y1="0" x2="0" y2="1"><stop offset="0%"   stopColor="#FFD700"/><stop offset="100%" stopColor="#a37c28"/></linearGradient>
-        <linearGradient id="b2G" x1="0" y1="0" x2="0" y2="1"><stop offset="0%"   stopColor="#C9A84C"/><stop offset="100%" stopColor="#7a5510"/></linearGradient>
+        <linearGradient id="cG"  x1="0" y1="0" x2="1" y2="0"><stop offset="0%"  stopColor="#a37c28"/><stop offset="40%" stopColor="#FFD700"/><stop offset="70%" stopColor="#C9A84C"/><stop offset="100%" stopColor="#8a6010"/></linearGradient>
+        <linearGradient id="hG"  x1="0" y1="0" x2="1" y2="0"><stop offset="0%"  stopColor="#a37c28"/><stop offset="50%" stopColor="#FFD700"/><stop offset="100%" stopColor="#a37c28"/></linearGradient>
+        <linearGradient id="sG"  x1="0" y1="0" x2="1" y2="0"><stop offset="0%"  stopColor="#8a6010"/><stop offset="50%" stopColor="#FFD700"/><stop offset="100%" stopColor="#8a6010"/></linearGradient>
+        <linearGradient id="bG"  x1="0" y1="0" x2="0" y2="1"><stop offset="0%"  stopColor="#FFD700"/><stop offset="100%" stopColor="#a37c28"/></linearGradient>
+        <linearGradient id="b2G" x1="0" y1="0" x2="0" y2="1"><stop offset="0%"  stopColor="#C9A84C"/><stop offset="100%" stopColor="#7a5510"/></linearGradient>
       </defs>
     </svg>
   );
@@ -293,7 +279,7 @@ function TrophySVG({size=110}) {
 
 function SoccerBall({size=48, opacity=0.18}) {
   return (
-    <svg viewBox="0 0 100 100" style={{width:size,height:size,opacity}} xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 100 100" style={{width:size,height:size,opacity}}>
       <circle cx="50" cy="50" r="48" fill="white" stroke="#ccc" strokeWidth="1"/>
       <polygon points="50,28 62,38 58,52 42,52 38,38" fill="black"/>
       <polygon points="78,38 90,44 88,58 76,64 66,56 68,42" fill="black"/>
@@ -304,7 +290,42 @@ function SoccerBall({size=48, opacity=0.18}) {
   );
 }
 
-/* ── HERO ────────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════
+   SETUP SCREEN — shown when Firebase config is not filled in
+   ═══════════════════════════════════════════════════════════════════ */
+function SetupScreen() {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 text-white" style={{background:"#071c35"}}>
+      <div className="text-5xl mb-4">🔧</div>
+      <h1 className="text-2xl font-black mb-2 text-center">One-time Firebase setup needed</h1>
+      <p className="text-sm text-center mb-6" style={{color:"#4a6080",maxWidth:420}}>
+        To share sticker data across all devices, this app needs a free Firebase database.
+        Follow the steps below, then paste your config into <code style={{color:"#C9A84C"}}>index.html</code>.
+      </p>
+      <div className="w-full rounded-2xl p-5 text-sm" style={{background:"#0a1e38",border:"1px solid #1a3055",maxWidth:480}}>
+        {[
+          ["1", "Go to", "console.firebase.google.com", "and sign in with Google"],
+          ["2", "Click", "Add project", "→ name it  wc2026-stickers  → Create"],
+          ["3", "In the left menu click", "Build → Realtime Database", "→ Create database → Start in test mode"],
+          ["4", "Click the ⚙️ gear icon → Project Settings →", "Your apps", "→ Add app → Web (</>) → Register"],
+          ["5", "Copy the", "firebaseConfig", "object shown and paste it into the FIREBASE_CONFIG block in index.html"],
+        ].map(([num, pre, bold, post]) => (
+          <div key={num} className="flex gap-3 mb-3">
+            <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center font-black text-xs" style={{background:"#C9A84C",color:"#071c35"}}>{num}</span>
+            <p style={{color:"#94a3b8"}}>{pre} <span className="font-bold text-white">{bold}</span> {post}</p>
+          </div>
+        ))}
+      </div>
+      <p className="text-xs mt-6" style={{color:"#2a4060"}}>Free tier is more than enough — no credit card needed.</p>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   HERO BANNER (shared)
+   ═══════════════════════════════════════════════════════════════════ */
+function flagUrl(code) { return code ? `https://flagcdn.com/w80/${code}.png` : null; }
+
 function Hero({compact=false, userBadge=null, onSwitch=null}) {
   return (
     <div className="relative overflow-hidden pitch-stripes"
@@ -334,11 +355,11 @@ function Hero({compact=false, userBadge=null, onSwitch=null}) {
         <p className="text-white font-black text-sm tracking-widest uppercase mb-1" style={{letterSpacing:"0.2em"}}>
           Panini Sticker Album
         </p>
-        {userBadge && (
+        {userBadge ? (
           <div className="flex items-center gap-2 mb-3 rounded-full px-4 py-1.5"
             style={{background:userBadge.cardBg,border:`1.5px solid ${userBadge.cardBorder}`}}>
             <span className="text-lg">{userBadge.emoji}</span>
-            <span className="font-black text-white text-sm tracking-wide">{userBadge.label}'s Album</span>
+            <span className="font-black text-white text-sm">{userBadge.label}'s Album</span>
             {onSwitch && (
               <button onClick={onSwitch} className="ml-1 text-xs font-bold rounded-full px-2 py-0.5"
                 style={{background:"rgba(0,0,0,0.35)",color:userBadge.accentLight}}>
@@ -346,17 +367,16 @@ function Hero({compact=false, userBadge=null, onSwitch=null}) {
               </button>
             )}
           </div>
-        )}
-        {!userBadge && (
+        ) : (
           <p className="text-sm mb-4" style={{color:"#C9A84C"}}>
-            DARF & SALCAST — 980 Stickers · 48 Teams
+            DARF &amp; SALCAST — 980 Stickers · 48 Teams
           </p>
         )}
         <div className="flex gap-5 items-center justify-center mb-3">
           {[{code:"us",name:"USA"},{code:"ca",name:"Canada"},{code:"mx",name:"Mexico"}].map(h=>(
             <div key={h.code} className="flex flex-col items-center gap-1">
               <img src={flagUrl(h.code)} alt={h.name}
-                style={{width:compact?40:52,height:compact?28:36,borderRadius:6,objectFit:"cover",boxShadow:"0 2px 10px rgba(0,0,0,.6)"}}
+                style={{width:compact?38:52,height:compact?26:36,borderRadius:6,objectFit:"cover",boxShadow:"0 2px 10px rgba(0,0,0,.6)"}}
                 onError={e=>{e.target.style.display="none"}}/>
               <span className="text-xs font-bold text-gray-300">{h.name}</span>
             </div>
@@ -373,19 +393,33 @@ function Hero({compact=false, userBadge=null, onSwitch=null}) {
   );
 }
 
-/* ── LOGIN SCREEN ────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════
+   LOGIN SCREEN
+   ═══════════════════════════════════════════════════════════════════ */
 function LoginScreen({onSelect}) {
-  const [stats] = React.useState(() => ({
-    DARF:    getStats(USERS.DARF.storageKey),
-    SALCAST: getStats(USERS.SALCAST.storageKey),
-  }));
+  const [stats, setStats] = React.useState({DARF:null, SALCAST:null});
+
+  React.useEffect(() => {
+    Object.values(USERS).forEach(user => {
+      const ref = dbRef(`stickers/${user.label}`);
+      if (!ref) return;
+      ref.once('value', snap => {
+        setStats(prev => ({...prev, [user.label]: calcStats(snap.val()||{})}));
+      });
+    });
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col" style={{background:"#071c35"}}>
       <Hero compact={true}/>
       <div className="flex flex-col items-center flex-1 px-5 py-6 slide-in">
         <p className="text-white font-black text-xl mb-1">Who's collecting today?</p>
-        <p className="text-sm mb-6" style={{color:"#4a6080"}}>Select your album — data is saved separately</p>
+        <p className="text-sm mb-2" style={{color:"#4a6080"}}>Pick an album — anyone can contribute!</p>
+        {/* Live sync badge */}
+        <div className="flex items-center gap-2 mb-6 rounded-full px-3 py-1" style={{background:"#0a2040",border:"1px solid #1a3055"}}>
+          <span className="w-2 h-2 rounded-full bg-green-400 sync-dot inline-block"/>
+          <span className="text-xs font-semibold" style={{color:"#4ade80"}}>Live sync — changes appear on all devices</span>
+        </div>
         <div className="flex flex-col gap-4 w-full max-w-sm">
           {Object.values(USERS).map(user => {
             const s = stats[user.label];
@@ -401,13 +435,13 @@ function LoginScreen({onSelect}) {
                   <div>
                     <p className="text-white font-black text-2xl leading-none">{user.label}</p>
                     <p className="text-xs font-semibold mt-0.5" style={{color:user.accentLight}}>
-                      {s.pct}% complete · {s.owned+s.dup} / {TOTAL}
+                      {s ? `${s.pct}% complete · ${s.owned+s.dup} / ${TOTAL}` : "Loading…"}
                     </p>
                   </div>
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 text-2xl font-black" style={{color:user.accentLight}}>›</div>
                 </div>
                 <div className="grid grid-cols-3 gap-2 mb-3">
-                  {[
+                  {s ? [
                     {val:s.owned,   label:"✅ Got",  col:"#86efac"},
                     {val:s.missing, label:"❌ Need",  col:"#fca5a5"},
                     {val:s.dup,     label:"🔄 Swap",  col:"#fde68a"},
@@ -416,11 +450,17 @@ function LoginScreen({onSelect}) {
                       <div className="text-lg font-black" style={{color:col}}>{val}</div>
                       <div className="text-xs" style={{color:col}}>{label}</div>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="col-span-3 text-center py-2 text-sm" style={{color:"rgba(255,255,255,0.3)"}}>
+                      Connecting…
+                    </div>
+                  )}
                 </div>
-                <div className="rounded-full overflow-hidden" style={{height:6,background:"rgba(0,0,0,0.4)"}}>
-                  <div className="h-full rounded-full" style={{width:`${s.pct}%`,background:"linear-gradient(90deg,#C8102E,#C9A84C,#FFD700)"}}/>
-                </div>
+                {s && (
+                  <div className="rounded-full overflow-hidden" style={{height:6,background:"rgba(0,0,0,0.4)"}}>
+                    <div className="h-full rounded-full" style={{width:`${s.pct}%`,background:"linear-gradient(90deg,#C8102E,#C9A84C,#FFD700)"}}/>
+                  </div>
+                )}
               </button>
             );
           })}
@@ -433,38 +473,30 @@ function LoginScreen({onSelect}) {
   );
 }
 
-/* ── STICKER BUTTON ──────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════
+   STICKER BUTTON
+   ═══════════════════════════════════════════════════════════════════ */
 function StickerBtn({sticker, state, onCycle, highlight}) {
   const isFoil   = sticker.type === "foil";
   const isPhoto  = sticker.type === "photo";
   const isMuseum = sticker.type === "museum";
-
   let cls = "sticker-btn relative rounded-lg flex flex-col items-center justify-center select-none cursor-pointer ";
-  if (state === 1) {
-    cls += isFoil ? "s-foil-owned" : "s-owned";
-  } else if (state === 2) {
-    cls += "s-dup";
-  } else {
-    cls += isFoil ? "s-foil-missing" : "s-missing";
-  }
-
+  if      (state===1) cls += isFoil ? "s-foil-owned" : "s-owned";
+  else if (state===2) cls += "s-dup";
+  else                cls += isFoil ? "s-foil-missing" : "s-missing";
   const icon = isFoil ? "⭐" : isPhoto ? "📸" : isMuseum ? "🏆" : null;
-
   return (
     <button onClick={onCycle} className={cls}
       style={{
         height: isFoil||isMuseum ? "58px" : "52px",
-        outline:   highlight ? "3px solid #FFD700" : undefined,
-        outlineOffset: highlight ? "2px" : undefined,
-        transform: highlight ? "scale(1.1)" : undefined,
-        zIndex:    highlight ? 10 : undefined,
-      }}
-      aria-label={sticker.id}>
+        outline:      highlight ? "3px solid #FFD700" : undefined,
+        outlineOffset:highlight ? "2px" : undefined,
+        transform:    highlight ? "scale(1.1)" : undefined,
+        zIndex:       highlight ? 10 : undefined,
+      }}>
       {icon && <span style={{fontSize:10,lineHeight:1,marginBottom:1}}>{icon}</span>}
-      <span className="font-black leading-none" style={{fontSize: sticker.id.length > 4 ? 9 : 11}}>
-        {sticker.id}
-      </span>
-      {state === 2 && (
+      <span className="font-black leading-none" style={{fontSize:sticker.id.length>4?9:11}}>{sticker.id}</span>
+      {state===2 && (
         <span className="absolute -top-1.5 -right-1.5 text-white font-black rounded-full flex items-center justify-center"
           style={{width:18,height:18,background:"#ea580c",fontSize:9}}>×2</span>
       )}
@@ -472,57 +504,99 @@ function StickerBtn({sticker, state, onCycle, highlight}) {
   );
 }
 
-/* ── TRACKER SCREEN ──────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════
+   TRACKER SCREEN
+   ═══════════════════════════════════════════════════════════════════ */
 function TrackerScreen({username, onSwitchUser}) {
   const user = USERS[username];
-  const [data, setData] = React.useState(() => loadData(user.storageKey));
-  const [search, setSearch] = React.useState("");
+  const [data, setData]       = React.useState({});
+  const [loading, setLoading] = React.useState(true);
+  const [syncing, setSyncing] = React.useState(false);
+  const [search, setSearch]   = React.useState("");
   const sectionRefs = React.useRef({});
+  const dataRef     = React.useRef(data);
+  React.useEffect(() => { dataRef.current = data; }, [data]);
 
-  React.useEffect(() => { saveData(user.storageKey, data); }, [data, user.storageKey]);
+  // Real-time Firebase listener
+  React.useEffect(() => {
+    const ref = dbRef(`stickers/${username}`);
+    if (!ref) { setLoading(false); return; }
+    const handler = ref.on('value', snap => {
+      setData(snap.val() || {});
+      setLoading(false);
+    }, () => setLoading(false));
+    return () => ref.off('value', handler);
+  }, [username]);
 
+  // Cycle sticker: optimistic update + Firebase write
   const cycle = React.useCallback((id) => {
-    setData(prev => ({ ...prev, [id]: ((prev[id] || 0) + 1) % 3 }));
-  }, []);
+    const current = dataRef.current[id] || 0;
+    const next    = (current + 1) % 3;
+    // Optimistic
+    setData(prev => { const n={...prev}; if(next===0) delete n[id]; else n[id]=next; return n; });
+    // Persist
+    const ref = dbRef(`stickers/${username}/${id}`);
+    if (!ref) return;
+    setSyncing(true);
+    const op = next===0 ? ref.remove() : ref.set(next);
+    op.finally(() => setSyncing(false));
+  }, [username]);
+
+  // Search / jump
+  const searchUpper = search.trim().toUpperCase();
+  const highlightId = searchUpper && STICKER_MAP[searchUpper] ? searchUpper : null;
+  React.useEffect(() => {
+    if (highlightId) {
+      sectionRefs.current[STICKER_MAP[highlightId].si]?.scrollIntoView({behavior:"smooth",block:"start"});
+    } else if (searchUpper) {
+      const si = ALBUM.findIndex(s=>s.id===searchUpper||s.name.toUpperCase().includes(searchUpper));
+      if (si>=0) sectionRefs.current[si]?.scrollIntoView({behavior:"smooth",block:"start"});
+    }
+  }, [highlightId, searchUpper]);
 
   const owned   = Object.values(data).filter(v=>v===1).length;
   const dup     = Object.values(data).filter(v=>v===2).length;
   const missing = TOTAL - owned - dup;
   const pct     = ((owned+dup)/TOTAL*100).toFixed(1);
 
-  // Determine which sticker to highlight and scroll to
-  const searchUpper = search.trim().toUpperCase();
-  const highlightId = searchUpper && STICKER_MAP[searchUpper] ? searchUpper : null;
-
-  React.useEffect(() => {
-    if (highlightId) {
-      const si = STICKER_MAP[highlightId].si;
-      sectionRefs.current[si]?.scrollIntoView({behavior:"smooth", block:"start"});
-    }
-  }, [highlightId]);
-
-  // Also scroll to a section if search matches section id or team name
-  React.useEffect(() => {
-    if (searchUpper && !highlightId) {
-      const si = ALBUM.findIndex(s =>
-        s.id === searchUpper ||
-        s.name.toUpperCase().includes(searchUpper)
-      );
-      if (si >= 0) sectionRefs.current[si]?.scrollIntoView({behavior:"smooth", block:"start"});
-    }
-  }, [searchUpper, highlightId]);
+  if (loading) return (
+    <div className="min-h-screen flex flex-col items-center justify-center" style={{background:"#071c35"}}>
+      <div className="text-5xl mb-4">⚽</div>
+      <p className="font-black text-white text-lg mb-2">Loading {username}'s album…</p>
+      <div className="flex gap-1">
+        {[0,1,2].map(i=>(
+          <div key={i} className="w-2 h-2 rounded-full bg-green-400"
+            style={{animation:`pulse-dot 1.2s ${i*0.2}s ease-in-out infinite`}}/>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen" style={{background:"#071c35"}}>
       <Hero compact={false} userBadge={user} onSwitch={onSwitchUser}/>
 
-      {/* ── STICKY BAR ─────────────────────────────────────────────── */}
+      {/* ── STICKY BAR ───────────────────────────────────────────── */}
       <div className="sticky top-0 z-20 px-3 pt-3 pb-2"
         style={{background:"rgba(7,28,53,0.97)",backdropFilter:"blur(12px)",borderBottom:"1px solid #1a3055"}}>
-        {/* User strip */}
-        <div className="flex items-center justify-between rounded-lg px-3 py-1 mb-2"
+        {/* User + sync strip */}
+        <div className="flex items-center justify-between rounded-lg px-3 py-1.5 mb-2"
           style={{background:user.cardBg,border:`1px solid ${user.cardBorder}`}}>
-          <span className="text-xs font-black text-white">{user.emoji} {user.label}'s Album</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-black text-white">{user.emoji} {user.label}'s Album</span>
+            {syncing && (
+              <span className="flex items-center gap-1 text-xs" style={{color:user.accentLight}}>
+                <span className="w-1.5 h-1.5 rounded-full inline-block sync-dot" style={{background:user.accentLight}}/>
+                saving…
+              </span>
+            )}
+            {!syncing && (
+              <span className="flex items-center gap-1 text-xs" style={{color:"#4ade80"}}>
+                <span className="w-1.5 h-1.5 rounded-full inline-block bg-green-400"/>
+                live
+              </span>
+            )}
+          </div>
           <button onClick={onSwitchUser} className="text-xs font-bold rounded-full px-2 py-0.5"
             style={{background:"rgba(0,0,0,0.35)",color:user.accentLight}}>
             Switch user ↩
@@ -550,11 +624,9 @@ function TrackerScreen({username, onSwitchUser}) {
           {pct}% · {owned+dup} / {TOTAL} stickers
         </p>
         {/* Search */}
-        <input
-          type="text"
+        <input type="text"
           placeholder="🔍  Search sticker code (MEX5, ARG1, FWC3…)"
-          value={search}
-          onChange={e=>setSearch(e.target.value)}
+          value={search} onChange={e=>setSearch(e.target.value)}
           className="w-full rounded-xl px-4 py-3 text-sm font-semibold text-white placeholder-gray-600 outline-none"
           style={{background:"#0a1e38",border:"2px solid #1a3055",transition:"border-color .2s"}}
           onFocus={e=>e.target.style.borderColor="#C9A84C"}
@@ -562,44 +634,37 @@ function TrackerScreen({username, onSwitchUser}) {
         />
       </div>
 
-      {/* ── LEGEND ───────────────────────────────────────────────────── */}
+      {/* ── LEGEND ───────────────────────────────────────────────── */}
       <div className="flex flex-wrap gap-3 justify-center text-xs px-3 py-2" style={{color:"#4a6080"}}>
-        <span className="flex items-center gap-1"><span className="w-4 h-4 rounded" style={{background:"#0f2040",border:"1px solid #1a3050",display:"inline-block"}}/>Missing</span>
+        <span className="flex items-center gap-1"><span className="w-4 h-4 rounded inline-block" style={{background:"#0f2040",border:"1px solid #1a3050"}}/>Missing</span>
         <span className="flex items-center gap-1"><span className="w-4 h-4 rounded bg-green-600 inline-block"/>Owned (1 tap)</span>
         <span className="flex items-center gap-1"><span className="w-4 h-4 rounded inline-block" style={{background:"#b45309"}}/>Duplicate (2 taps)</span>
-        <span className="flex items-center gap-1"><span className="text-xs">⭐</span>= Foil sticker</span>
-        <span className="flex items-center gap-1"><span className="text-xs">📸</span>= Team Photo</span>
+        <span className="flex items-center gap-1"><span className="text-xs">⭐</span>=Foil</span>
+        <span className="flex items-center gap-1"><span className="text-xs">📸</span>=Team Photo</span>
       </div>
 
-      {/* ── SECTIONS ─────────────────────────────────────────────────── */}
+      {/* ── SECTIONS ─────────────────────────────────────────────── */}
       <div className="px-3 pb-10 pt-1">
-        {ALBUM.map((section, si) => {
+        {ALBUM.map((section,si) => {
           const sStickers = section.stickers;
           const sOwned    = sStickers.filter(s=>(data[s.id]||0)===1).length;
           const sDup      = sStickers.filter(s=>(data[s.id]||0)===2).length;
           const sTotal    = sStickers.length;
-          const complete  = sOwned + sDup === sTotal;
+          const complete  = sOwned+sDup===sTotal;
+          const isSpecial = si===0||si===ALBUM.length-1;
           const fUrl      = flagUrl(section.flagCode);
-          const isSpecial = si===0 || si===ALBUM.length-1;
-
           return (
             <div key={section.id} ref={el=>sectionRefs.current[si]=el} className="team-card mb-4">
-              {/* Accent bar */}
               <div style={{height:3,background:`linear-gradient(90deg,${section.accent},${section.accent}66,transparent)`}}/>
-              {/* Header */}
               <div className="flex items-center justify-between px-3 py-2">
                 <div className="flex items-center gap-2">
                   {fUrl
                     ? <img src={fUrl} alt={section.name} className="flag-img" onError={e=>{e.target.style.display="none"}}/>
-                    : <span className="text-xl">{isSpecial ? (si===0?"🌐":"🏆") : "⚽"}</span>
+                    : <span className="text-xl">{si===0?"🌐":si===ALBUM.length-1?"🏆":"⚽"}</span>
                   }
                   <div>
                     <span className="font-black text-white text-sm block">{section.name}</span>
-                    {section.id !== "INTRO" && section.id !== "MUSEUM" && (
-                      <span className="text-xs" style={{color:"#4a6080"}}>
-                        {section.id}1 – {section.id}20
-                      </span>
-                    )}
+                    {!isSpecial && <span className="text-xs" style={{color:"#4a6080"}}>{section.id}1 – {section.id}20</span>}
                   </div>
                 </div>
                 <span className="text-xs font-bold px-2 py-0.5 rounded-full"
@@ -607,18 +672,11 @@ function TrackerScreen({username, onSwitchUser}) {
                   {sOwned+sDup}/{sTotal}{complete?" ✅":""}
                 </span>
               </div>
-              {/* Sticker grid */}
               <div className="grid gap-1.5 px-3 pb-3"
-                style={{gridTemplateColumns:`repeat(${isSpecial ? Math.min(sTotal,5) : 5},1fr)`}}
-                >
-                {sStickers.map(s => (
-                  <StickerBtn
-                    key={s.id}
-                    sticker={s}
-                    state={data[s.id]||0}
-                    onCycle={()=>cycle(s.id)}
-                    highlight={highlightId===s.id}
-                  />
+                style={{gridTemplateColumns:`repeat(${isSpecial?Math.min(sTotal,5):5},1fr)`}}>
+                {sStickers.map(s=>(
+                  <StickerBtn key={s.id} sticker={s} state={data[s.id]||0}
+                    onCycle={()=>cycle(s.id)} highlight={highlightId===s.id}/>
                 ))}
               </div>
             </div>
@@ -626,7 +684,7 @@ function TrackerScreen({username, onSwitchUser}) {
         })}
       </div>
 
-      {/* ── FOOTER ───────────────────────────────────────────────────── */}
+      {/* ── FOOTER ───────────────────────────────────────────────── */}
       <div style={{background:"linear-gradient(0deg,#030d1a,#071c35)",borderTop:"1px solid #1a3055",padding:"24px 16px"}}>
         <div className="flex justify-center gap-3 mb-3">
           {["🇺🇸","🇨🇦","🇲🇽"].map(f=><span key={f} className="text-2xl">{f}</span>)}
@@ -644,13 +702,14 @@ function TrackerScreen({username, onSwitchUser}) {
   );
 }
 
-/* ── ROOT ────────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════
+   ROOT
+   ═══════════════════════════════════════════════════════════════════ */
 function App() {
   const [activeUser, setActiveUser] = React.useState(()=>sessionStorage.getItem(SESSION_KEY)||null);
-
-  const handleSelect = (u) => { sessionStorage.setItem(SESSION_KEY,u); setActiveUser(u); window.scrollTo(0,0); };
-  const handleSwitch = ()  => { sessionStorage.removeItem(SESSION_KEY); setActiveUser(null); window.scrollTo(0,0); };
-
+  if (!CONFIG_READY) return <SetupScreen/>;
+  const handleSelect = u => { sessionStorage.setItem(SESSION_KEY,u); setActiveUser(u); window.scrollTo(0,0); };
+  const handleSwitch = () => { sessionStorage.removeItem(SESSION_KEY); setActiveUser(null); window.scrollTo(0,0); };
   if (!activeUser) return <LoginScreen onSelect={handleSelect}/>;
   return <TrackerScreen username={activeUser} onSwitchUser={handleSwitch}/>;
 }
