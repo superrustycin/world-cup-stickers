@@ -487,6 +487,7 @@ function TrackerScreen({username, onSwitchUser}) {
   const [fbError, setFbError] = React.useState(false);
   const [syncing, setSyncing] = React.useState(false);
   const [search, setSearch]   = React.useState("");
+  const [filter, setFilter]   = React.useState(null); // null=all, 0=missing, 1=owned, 2=dup
   const sectionRefs = React.useRef({});
   const dataRef     = React.useRef(data);
   React.useEffect(() => { dataRef.current = data; }, [data]);
@@ -600,27 +601,47 @@ function TrackerScreen({username, onSwitchUser}) {
             Switch user ↩
           </button>
         </div>
-        {/* Stats */}
+        {/* Stats / filter buttons */}
         <div className="grid grid-cols-3 gap-2 mb-2">
           {[
-            {val:owned,   label:"✅ Collected", bg:"linear-gradient(135deg,#0d3a1a,#164d25)", border:"#1a5c2a", col:"#4ade80",  sub:"#86efac"},
-            {val:missing, label:"❌ Missing",    bg:"linear-gradient(135deg,#3a0d10,#5a1015)", border:"#7f1d1d", col:"#fca5a5",  sub:"#fca5a5"},
-            {val:dup,     label:"🔄 Duplicates", bg:"linear-gradient(135deg,#3a2200,#4d2e00)", border:"#713f12", col:"#fcd34d",  sub:"#fde68a"},
-          ].map(({val,label,bg,border,col,sub})=>(
-            <div key={label} className="rounded-xl p-2 text-center" style={{background:bg,border:`1px solid ${border}`}}>
+            {key:1, val:owned,   label:"✅ Collected", bg:"linear-gradient(135deg,#0d3a1a,#164d25)", border:"#1a5c2a", col:"#4ade80",  sub:"#86efac"},
+            {key:0, val:missing, label:"❌ Missing",    bg:"linear-gradient(135deg,#3a0d10,#5a1015)", border:"#7f1d1d", col:"#fca5a5",  sub:"#fca5a5"},
+            {key:2, val:dup,     label:"🔄 Duplicates", bg:"linear-gradient(135deg,#3a2200,#4d2e00)", border:"#713f12", col:"#fcd34d",  sub:"#fde68a"},
+          ].map(({key,val,label,bg,border,col,sub})=>{
+            const active = filter === key;
+            return (
+            <button key={label} onClick={()=>setFilter(active ? null : key)}
+              className="rounded-xl p-2 text-center sticker-btn"
+              style={{
+                background: bg,
+                border: active ? `2px solid ${col}` : `1px solid ${border}`,
+                boxShadow: active ? `0 0 12px ${col}44` : "none",
+                transform: active ? "scale(1.04)" : "scale(1)",
+                transition: "all .15s",
+              }}>
               <div className="text-2xl font-black" style={{color:col}}>{val}</div>
               <div className="text-xs font-bold" style={{color:sub}}>{label}</div>
-            </div>
-          ))}
+            </button>
+            );
+          })}
         </div>
         {/* Progress */}
         <div className="relative w-full rounded-full mb-1 overflow-hidden" style={{height:8,background:"#0d2040"}}>
           <div className="h-full rounded-full transition-all duration-700"
             style={{width:`${pct}%`,background:"linear-gradient(90deg,#C8102E,#C9A84C,#FFD700)"}}/>
         </div>
-        <p className="text-center text-xs mb-2" style={{color:"#C9A84C"}}>
-          {pct}% · {owned+dup} / {TOTAL} stickers
-        </p>
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <p className="text-center text-xs" style={{color:"#C9A84C"}}>
+            {pct}% · {owned+dup} / {TOTAL} stickers
+          </p>
+          {filter !== null && (
+            <button onClick={()=>setFilter(null)}
+              className="text-xs font-bold rounded-full px-2 py-0.5 flex items-center gap-1"
+              style={{background:"#1a3055",color:"#94a3b8",border:"1px solid #2a4060"}}>
+              {filter===1?"✅ Collected":filter===0?"❌ Missing":"🔄 Duplicates"} ✕
+            </button>
+          )}
+        </div>
         {/* Search */}
         <input type="text"
           placeholder="🔍  Search sticker code (MEX5, ARG1, FWC3…)"
@@ -644,13 +665,17 @@ function TrackerScreen({username, onSwitchUser}) {
       {/* ── SECTIONS ─────────────────────────────────────────────── */}
       <div className="px-3 pb-10 pt-1">
         {ALBUM.map((section,si) => {
-          const sStickers = section.stickers;
-          const sOwned    = sStickers.filter(s=>(data[s.id]||0)===1).length;
-          const sDup      = sStickers.filter(s=>(data[s.id]||0)===2).length;
-          const sTotal    = sStickers.length;
-          const complete  = sOwned+sDup===sTotal;
-          const isSpecial = si===0||si===ALBUM.length-1;
-          const fUrl      = flagUrl(section.flagCode);
+          const sStickers    = section.stickers;
+          const sOwned       = sStickers.filter(s=>(data[s.id]||0)===1).length;
+          const sDup         = sStickers.filter(s=>(data[s.id]||0)===2).length;
+          const sTotal       = sStickers.length;
+          const complete     = sOwned+sDup===sTotal;
+          const isSpecial    = si===0||si===ALBUM.length-1;
+          const fUrl         = flagUrl(section.flagCode);
+          const visStickers  = filter === null
+            ? sStickers
+            : sStickers.filter(s=>(data[s.id]||0)===filter);
+          if (visStickers.length === 0) return null;
           return (
             <div key={section.id} ref={el=>sectionRefs.current[si]=el} className="team-card mb-4">
               <div style={{height:3,background:`linear-gradient(90deg,${section.accent},${section.accent}66,transparent)`}}/>
@@ -667,12 +692,12 @@ function TrackerScreen({username, onSwitchUser}) {
                 </div>
                 <span className="text-xs font-bold px-2 py-0.5 rounded-full"
                   style={{background:complete?"#14532d":"#0d2040",border:`1px solid ${complete?"#166534":"#1a3055"}`,color:complete?"#86efac":"#4a6080"}}>
-                  {sOwned+sDup}/{sTotal}{complete?" ✅":""}
+                  {filter===null ? `${sOwned+sDup}/${sTotal}${complete?" ✅":""}` : `${visStickers.length} shown`}
                 </span>
               </div>
               <div className="grid gap-1.5 px-3 pb-3"
-                style={{gridTemplateColumns:`repeat(${isSpecial?Math.min(sTotal,5):5},1fr)`}}>
-                {sStickers.map(s=>(
+                style={{gridTemplateColumns:`repeat(${isSpecial?Math.min(visStickers.length,5):5},1fr)`}}>
+                {visStickers.map(s=>(
                   <StickerBtn key={s.id} sticker={s} state={data[s.id]||0}
                     onCycle={()=>cycle(s.id)} highlight={highlightId===s.id}/>
                 ))}
