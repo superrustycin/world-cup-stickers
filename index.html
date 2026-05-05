@@ -478,6 +478,147 @@ function StickerBtn({sticker, state, onCycle, highlight}) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
+   EXPORT MODAL
+   ═══════════════════════════════════════════════════════════════════ */
+function ExportModal({data, username, onClose}) {
+  const [listType, setListType] = React.useState(1); // 1=collected, 0=missing, 2=dup
+  const [copied,   setCopied]   = React.useState(false);
+
+  // Build the sticker list for the chosen type
+  const buildList = React.useCallback((type) => {
+    const lines = [];
+    ALBUM.forEach(section => {
+      const matches = section.stickers.filter(s => (data[s.id]||0) === type);
+      if (matches.length === 0) return;
+      lines.push(`${section.name}`);
+      lines.push(matches.map(s => s.id).join(", "));
+      lines.push("");
+    });
+    return lines.join("\n").trimEnd();
+  }, [data]);
+
+  const TYPES = [
+    {key:1, label:"✅ Collected", col:"#4ade80", border:"#1a5c2a", bg:"#0d3a1a"},
+    {key:0, label:"❌ Missing",   col:"#fca5a5", border:"#7f1d1d", bg:"#3a0d10"},
+    {key:2, label:"🔄 Duplicates",col:"#fcd34d", border:"#713f12", bg:"#3a2200"},
+  ];
+
+  const textContent = buildList(listType);
+  const lineCount   = textContent.split("\n").filter(l=>l.trim()).length;
+  const currentType = TYPES.find(t=>t.key===listType);
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(textContent).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2200);
+    });
+  };
+
+  const downloadCSV = () => {
+    const rows = ["Team,Sticker ID"];
+    ALBUM.forEach(section => {
+      section.stickers
+        .filter(s => (data[s.id]||0) === listType)
+        .forEach(s => rows.push(`"${section.name}",${s.id}`));
+    });
+    const blob = new Blob([rows.join("\n")], {type:"text/csv"});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    const label = listType===1?"collected":listType===0?"missing":"duplicates";
+    a.href = url; a.download = `${username}_${label}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadTXT = () => {
+    const header = `FIFA World Cup 2026 — ${username}'s ${currentType.label} stickers\n${"─".repeat(40)}\n\n`;
+    const blob = new Blob([header + textContent], {type:"text/plain"});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    const label = listType===1?"collected":listType===0?"missing":"duplicates";
+    a.href = url; a.download = `${username}_${label}.txt`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center"
+      style={{background:"rgba(0,0,0,.7)", backdropFilter:"blur(6px)"}}
+      onClick={e=>{ if(e.target===e.currentTarget) onClose(); }}>
+      <div className="w-full rounded-t-3xl slide-in"
+        style={{background:"#0a1e38", border:"1px solid #1a3055", maxWidth:480, maxHeight:"90vh", display:"flex", flexDirection:"column"}}>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 pt-5 pb-3" style={{borderBottom:"1px solid #1a3055"}}>
+          <div>
+            <p className="text-white font-black text-lg leading-none">📤 Export List</p>
+            <p className="text-xs mt-1" style={{color:"#4a6080"}}>{username}'s album · {lineCount} stickers</p>
+          </div>
+          <button onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black"
+            style={{background:"#1a3055",color:"#64748b"}}>✕</button>
+        </div>
+
+        {/* List type picker */}
+        <div className="grid grid-cols-3 gap-2 px-4 pt-4">
+          {TYPES.map(({key,label,col,border,bg})=>(
+            <button key={key} onClick={()=>setListType(key)}
+              className="rounded-xl py-2.5 text-xs font-black text-center transition-all"
+              style={{
+                background: listType===key ? bg : "rgba(255,255,255,.03)",
+                border: `1.5px solid ${listType===key ? col : "#1a3055"}`,
+                color: listType===key ? col : "#4a6080",
+                boxShadow: listType===key ? `0 0 10px ${col}33` : "none",
+              }}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Preview box */}
+        <div className="flex-1 overflow-y-auto mx-4 mt-3 rounded-xl p-3"
+          style={{background:"#071424", border:"1px solid #1a3055", fontFamily:"monospace", fontSize:11, color:"#94a3b8", minHeight:120, maxHeight:280, whiteSpace:"pre-wrap", lineHeight:1.7}}>
+          {textContent || <span style={{color:"#2a4060"}}>No stickers in this list yet.</span>}
+        </div>
+
+        {/* Action buttons */}
+        <div className="px-4 pt-3 pb-6 grid grid-cols-3 gap-2">
+          {/* Copy for chat */}
+          <button onClick={copyToClipboard}
+            className="rounded-xl py-3 flex flex-col items-center gap-1 transition-all"
+            style={{
+              background: copied ? "linear-gradient(135deg,#0d3a1a,#164d25)" : "rgba(255,255,255,.05)",
+              border: copied ? "1px solid #1a5c2a" : "1px solid #1a3055",
+            }}>
+            <span style={{fontSize:20}}>{copied ? "✅" : "📋"}</span>
+            <span className="text-xs font-bold" style={{color: copied ? "#4ade80" : "#94a3b8"}}>
+              {copied ? "Copied!" : "Copy"}
+            </span>
+            <span style={{fontSize:9, color:"#2a4060"}}>WhatsApp / Telegram</span>
+          </button>
+
+          {/* Download TXT */}
+          <button onClick={downloadTXT}
+            className="rounded-xl py-3 flex flex-col items-center gap-1"
+            style={{background:"rgba(255,255,255,.05)", border:"1px solid #1a3055"}}>
+            <span style={{fontSize:20}}>📝</span>
+            <span className="text-xs font-bold" style={{color:"#94a3b8"}}>TXT</span>
+            <span style={{fontSize:9, color:"#2a4060"}}>Text file</span>
+          </button>
+
+          {/* Download CSV */}
+          <button onClick={downloadCSV}
+            className="rounded-xl py-3 flex flex-col items-center gap-1"
+            style={{background:"rgba(255,255,255,.05)", border:"1px solid #1a3055"}}>
+            <span style={{fontSize:20}}>📊</span>
+            <span className="text-xs font-bold" style={{color:"#94a3b8"}}>CSV</span>
+            <span style={{fontSize:9, color:"#2a4060"}}>Spreadsheet</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
    TRACKER SCREEN
    ═══════════════════════════════════════════════════════════════════ */
 function TrackerScreen({username, onSwitchUser}) {
@@ -488,6 +629,7 @@ function TrackerScreen({username, onSwitchUser}) {
   const [syncing, setSyncing] = React.useState(false);
   const [search, setSearch]   = React.useState("");
   const [filter, setFilter]   = React.useState(null); // null=all, 0=missing, 1=owned, 2=dup
+  const [showExport, setShowExport] = React.useState(false);
   const sectionRefs = React.useRef({});
   const dataRef     = React.useRef(data);
   React.useEffect(() => { dataRef.current = data; }, [data]);
@@ -714,13 +856,22 @@ function TrackerScreen({username, onSwitchUser}) {
         </div>
         <p className="text-center text-xs font-bold mb-1" style={{color:"#C9A84C"}}>FIFA World Cup 2026™</p>
         <p className="text-center text-xs mb-4" style={{color:"#2a4060"}}>Made with ⚽ for DARF &amp; SALCAST</p>
-        <div className="flex justify-center">
+        <div className="flex justify-center gap-3 flex-wrap">
           <button onClick={onSwitchUser} className="text-xs font-bold rounded-full px-4 py-2"
             style={{background:user.cardBg,border:`1px solid ${user.cardBorder}`,color:user.accentLight}}>
             {user.emoji} Switch to other album ↩
           </button>
+          <button onClick={()=>setShowExport(true)} className="text-xs font-bold rounded-full px-4 py-2 flex items-center gap-1.5"
+            style={{background:"linear-gradient(135deg,#0d3a1a,#164d25)",border:"1px solid #1a5c2a",color:"#4ade80"}}>
+            📤 Export list
+          </button>
         </div>
       </div>
+
+      {/* ── EXPORT MODAL ─────────────────────────────────────────── */}
+      {showExport && (
+        <ExportModal data={data} username={username} onClose={()=>setShowExport(false)}/>
+      )}
     </div>
   );
 }
