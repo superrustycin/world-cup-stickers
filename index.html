@@ -539,6 +539,104 @@ function ExportModal({data,username,onClose}) {
 }
 
 /* ════════════════════════════════════════════════════════════
+   QUICK ADD MODAL
+════════════════════════════════════════════════════════════ */
+function QuickAddModal({onAdd, onClose}) {
+  const [input,   setInput]   = React.useState("");
+  const [state,   setState]   = React.useState(1); // 1=collected, 2=duplicate, 0=missing
+  const [result,  setResult]  = React.useState(null); // {ok:[],bad:[]}
+  const textareaRef = React.useRef(null);
+
+  React.useEffect(()=>{ setTimeout(()=>textareaRef.current&&textareaRef.current.focus(), 120); },[]);
+
+  const STATES=[
+    {key:1, label:"✅ Collected",  col:"#4ade80", border:"rgba(74,222,128,.25)",  bg:"rgba(74,222,128,.08)"},
+    {key:2, label:"🔄 Duplicate",  col:"#fcd34d", border:"rgba(252,211,77,.25)",  bg:"rgba(252,211,77,.08)"},
+    {key:0, label:"❌ Remove",     col:"#fca5a5", border:"rgba(248,113,113,.25)",  bg:"rgba(248,113,113,.08)"},
+  ];
+  const cur = STATES.find(s=>s.key===state);
+
+  const handleAdd = () => {
+    const ids = input.toUpperCase().match(/[A-Z]+\d+/g) || [];
+    const ok=[], bad=[];
+    ids.forEach(id => { if(STICKER_MAP[id]) ok.push(id); else bad.push(id); });
+    if(!ok.length && !bad.length) return;
+    ok.forEach(id => onAdd(id, state));
+    setResult({ok, bad});
+    setInput("");
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center"
+      style={{background:"rgba(0,0,0,.75)",backdropFilter:"blur(8px)"}}
+      onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div className="w-full slide-up rounded-t-3xl flex flex-col"
+        style={{background:"#0a1828",border:"1px solid rgba(255,255,255,.07)",maxWidth:480}}>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 pt-5 pb-3" style={{borderBottom:"1px solid rgba(255,255,255,.06)"}}>
+          <div>
+            <p className="text-white font-black text-lg leading-none">➕ Add Stickers</p>
+            <p style={{fontSize:11,color:"#334155",marginTop:3}}>Type or paste sticker IDs, then confirm</p>
+          </div>
+          <button onClick={onClose} className="tap w-8 h-8 rounded-full flex items-center justify-center"
+            style={{background:"rgba(255,255,255,.06)",color:"#475569"}}>✕</button>
+        </div>
+
+        <div className="px-4 pt-4 pb-6 flex flex-col gap-3">
+          {/* State selector */}
+          <div className="grid grid-cols-3 gap-2">
+            {STATES.map(({key,label,col,border,bg})=>(
+              <button key={key} onClick={()=>setState(key)}
+                className="tap rounded-xl py-2.5 text-xs font-black text-center"
+                style={{background:state===key?bg:"rgba(255,255,255,.03)",border:`1.5px solid ${state===key?col:"rgba(255,255,255,.07)"}`,color:state===key?col:"#334155",boxShadow:state===key?`0 0 10px ${col}30`:"none",transition:"all .15s"}}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Input */}
+          <div>
+            <p style={{fontSize:11,color:"#475569",marginBottom:6}}>Enter IDs separated by spaces, commas, or new lines — e.g. <span style={{color:"#C9A84C",fontFamily:"monospace"}}>FWC001 MEX023 ARG010</span></p>
+            <textarea ref={textareaRef}
+              value={input} onChange={e=>{setInput(e.target.value);setResult(null);}}
+              placeholder="FWC001 MEX023 ARG010…"
+              rows={4}
+              className="w-full rounded-xl p-3 text-sm font-mono"
+              style={{background:"#060e1c",border:"1px solid rgba(255,255,255,.09)",color:"#e2e8f0",outline:"none",resize:"none",lineHeight:1.7}}
+            />
+          </div>
+
+          {/* Result feedback */}
+          {result && (
+            <div className="rounded-xl p-3 text-xs" style={{background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)"}}>
+              {result.ok.length>0 && (
+                <p style={{color:"#4ade80",marginBottom:result.bad.length?4:0}}>
+                  ✅ {result.ok.length} sticker{result.ok.length!==1?"s":""} marked as <strong>{cur.label}</strong>
+                </p>
+              )}
+              {result.bad.length>0 && (
+                <p style={{color:"#fca5a5"}}>⚠️ Not found: <span style={{fontFamily:"monospace"}}>{result.bad.join(", ")}</span></p>
+              )}
+              {result.ok.length===0 && result.bad.length===0 && (
+                <p style={{color:"#475569"}}>No valid IDs found. Check the format.</p>
+              )}
+            </div>
+          )}
+
+          {/* Add button */}
+          <button onClick={handleAdd}
+            className="tap w-full rounded-xl py-3.5 font-black text-sm"
+            style={{background:"linear-gradient(135deg,#b8860b,#e6a800,#FFD700)",color:"#071c35",opacity:input.trim()?1:.45,transition:"opacity .15s"}}>
+            Mark as {cur.label}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════
    TOP NAV
 ════════════════════════════════════════════════════════════ */
 function TopNav({user,syncing,onLogout,showLogoutMenu,setShowLogoutMenu}) {
@@ -624,7 +722,7 @@ function BottomNav({active,setActive,onExport}) {
 /* ════════════════════════════════════════════════════════════
    HOME TAB
 ════════════════════════════════════════════════════════════ */
-function HomeTab({user,owned,dup,missing,pct,filter,setFilter,onSwitchUser}) {
+function HomeTab({user,owned,dup,missing,pct,filter,setFilter,onSwitchUser,onAddStickers,onGoAlbum}) {
   const r=45, circ=2*Math.PI*r, offset=circ-(pct/100)*circ;
   const next = Math.ceil(pct/5)*5;
   const need = Math.max(0,Math.round((next/100)*TOTAL)-owned-dup);
@@ -769,7 +867,7 @@ function HomeTab({user,owned,dup,missing,pct,filter,setFilter,onSwitchUser}) {
 
       {/* CTA buttons */}
       <div className="mx-4 mb-3 grid grid-cols-2 gap-3">
-        <button className="tap rounded-2xl p-4 flex items-center gap-3 text-left"
+        <button onClick={onAddStickers} className="tap rounded-2xl p-4 flex items-center gap-3 text-left"
           style={{background:"linear-gradient(135deg,#b8860b,#e6a800,#FFD700)",boxShadow:"0 4px 20px rgba(255,215,0,.22)"}}>
           <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{background:"rgba(0,0,0,.18)"}}>
             <Icon name="plus" size={18} color="#071c35" sw={2.4}/>
@@ -779,14 +877,14 @@ function HomeTab({user,owned,dup,missing,pct,filter,setFilter,onSwitchUser}) {
             <p style={{fontSize:10,color:"rgba(7,28,53,.55)",marginTop:3}}>Manually add your stickers</p>
           </div>
         </button>
-        <button className="tap rounded-2xl p-4 flex items-center gap-3 text-left"
+        <button onClick={onGoAlbum} className="tap rounded-2xl p-4 flex items-center gap-3 text-left"
           style={{background:"rgba(255,255,255,.04)",border:"1.5px solid rgba(255,255,255,.09)"}}>
           <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{background:"rgba(201,168,76,.1)"}}>
             <Icon name="camera" size={18} color="#C9A84C"/>
           </div>
           <div>
-            <p className="font-black text-sm text-white" style={{lineHeight:1}}>Scan Stickers</p>
-            <p style={{fontSize:10,color:"#1e3050",marginTop:3}}>Use camera to scan</p>
+            <p className="font-black text-sm text-white" style={{lineHeight:1}}>Browse Album</p>
+            <p style={{fontSize:10,color:"#1e3050",marginTop:3}}>Tap stickers to update</p>
           </div>
         </button>
       </div>
@@ -997,8 +1095,9 @@ function AppScreen({username, onLogout}) {
   const [filter,     setFilter]     = React.useState(null);
   const [search,     setSearch]     = React.useState("");
   const [activeTab,  setActiveTab]  = React.useState("home");
-  const [showExport, setShowExport] = React.useState(false);
-  const [logoutMenu, setLogoutMenu] = React.useState(false);
+  const [showExport,    setShowExport]    = React.useState(false);
+  const [showQuickAdd,  setShowQuickAdd]  = React.useState(false);
+  const [logoutMenu,    setLogoutMenu]    = React.useState(false);
   const dataRef = React.useRef(data);
   React.useEffect(()=>{ dataRef.current=data; },[data]);
 
@@ -1021,6 +1120,15 @@ function AppScreen({username, onLogout}) {
     if(!ref)return;
     setSyncing(true);
     (nxt===0?ref.remove():ref.set(nxt)).finally(()=>setSyncing(false));
+  },[username]);
+
+  /* Set sticker to a specific state (used by QuickAdd) */
+  const setSticker=React.useCallback((id,val)=>{
+    setData(prev=>{const n={...prev};if(val===0)delete n[id];else n[id]=val;return n;});
+    const ref=dbRef(`stickers/${username}/${id}`);
+    if(!ref)return;
+    setSyncing(true);
+    (val===0?ref.remove():ref.set(val)).finally(()=>setSyncing(false));
   },[username]);
 
   const owned   = Object.values(data).filter(v=>v===1).length;
@@ -1064,7 +1172,9 @@ function AppScreen({username, onLogout}) {
 
       {activeTab==="home"&&(
         <HomeTab user={user} owned={owned} dup={dup} missing={missing} pct={pct}
-          filter={filter} setFilter={setFilter} onSwitchUser={()=>{ setActiveTab("profile"); }}/>
+          filter={filter} setFilter={setFilter} onSwitchUser={()=>{ setActiveTab("profile"); }}
+          onAddStickers={()=>setShowQuickAdd(true)}
+          onGoAlbum={()=>setActiveTab("album")}/>
       )}
       {activeTab==="album"&&(
         <AlbumTab data={data} cycle={cycle} filter={filter} setFilter={setFilter}
@@ -1085,6 +1195,9 @@ function AppScreen({username, onLogout}) {
 
       {showExport&&(
         <ExportModal data={data} username={username} onClose={()=>setShowExport(false)}/>
+      )}
+      {showQuickAdd&&(
+        <QuickAddModal onAdd={setSticker} onClose={()=>setShowQuickAdd(false)}/>
       )}
     </div>
   );
