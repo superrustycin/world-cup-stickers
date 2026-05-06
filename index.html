@@ -53,6 +53,12 @@
     }
     .trophy-glow { animation: trophy-glow 3s ease-in-out infinite; }
 
+    @keyframes emblem-glow {
+      0%,100% { filter: drop-shadow(0 0 10px rgba(201,168,76,.45)) drop-shadow(0 0 28px rgba(201,168,76,.18)); }
+      50%     { filter: drop-shadow(0 0 20px rgba(255,215,0,.75)) drop-shadow(0 0 48px rgba(201,168,76,.3)); }
+    }
+    .emblem-glow { animation: emblem-glow 3s ease-in-out infinite; }
+
     @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.2} }
     .sync-dot { animation: pulse-dot 1.2s ease-in-out infinite; }
 
@@ -322,7 +328,13 @@ function LoginScreen({onLogin}) {
         <div style={{position:"absolute",inset:0,backgroundImage:"repeating-linear-gradient(0deg,transparent,transparent 60px,rgba(255,255,255,.011) 60px,rgba(255,255,255,.011) 61px)",pointerEvents:"none"}}/>
         <div style={{position:"absolute",bottom:0,left:0,right:0,height:3,background:"linear-gradient(90deg,#C8102E,#C9A84C,#FFD700,#C9A84C,#C8102E)"}}/>
         <div className="relative z-10 flex flex-col items-center">
-          <Trophy size={90}/>
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/2026_FIFA_World_Cup_emblem.svg/500px-2026_FIFA_World_Cup_emblem.svg.png"
+            alt="FIFA World Cup 2026 Official Emblem"
+            className="emblem-glow"
+            style={{width:100,height:"auto",objectFit:"contain"}}
+            onError={e=>{e.target.style.display="none";}}
+          />
           <p style={{color:"#C9A84C",fontSize:9,fontWeight:900,letterSpacing:".25em",marginTop:8}}>FIFA WORLD CUP™</p>
           <h1 className="gold-text font-black" style={{fontSize:56,letterSpacing:"-2px",lineHeight:1}}>2026</h1>
           <p className="font-black text-white text-xs" style={{letterSpacing:".18em",marginTop:2}}>PANINI STICKER ALBUM</p>
@@ -766,7 +778,15 @@ function HomeTab({user,owned,dup,missing,pct,filter,setFilter,onSwitchUser,onAdd
               <span style={{fontSize:11,color:"#C9A84C",fontWeight:700}}>{pct}% complete</span>
             </div>
           </div>
-          <div style={{flexShrink:0}}><Trophy size={110}/></div>
+          <div style={{flexShrink:0,width:120,display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/2026_FIFA_World_Cup_emblem.svg/500px-2026_FIFA_World_Cup_emblem.svg.png"
+              alt="FIFA World Cup 2026 Official Emblem"
+              className="emblem-glow"
+              style={{width:120,height:"auto",objectFit:"contain"}}
+              onError={e=>{e.target.style.display="none";}}
+            />
+          </div>
         </div>
       </div>
 
