@@ -1,4 +1,4 @@
-const CACHE = "wc2026-v10";
+const CACHE = "wc2026-v11";
 const ASSETS = ["./index.html", "./manifest.json"];
 
 self.addEventListener("install", e => {
